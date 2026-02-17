@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { Roboto_Flex } from "next/font/google";
 
-const PostHogPageView = dynamic(() => import("@/components/posthog-pageview"), {
-  ssr: false,
-});
+// const PostHogPageView = dynamic(() => import("@/components/posthog-pageview"), {
+//   ssr: false,
+// });
 
 const robotoFlex = Roboto_Flex({
   subsets: ["latin"],
@@ -45,7 +45,7 @@ export default function RootLayout({
       <CSPostHogProvider>
         <body className="flex flex-col min-h-screen text-primary">
           <div className="flex flex-1">
-            <PostHogPageView />
+            {/* <PostHogPageView /> */}
             <Toaster />
             {children}
           </div>

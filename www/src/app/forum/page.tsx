@@ -7,8 +7,8 @@ export interface IndexPageProps {
   searchParams: SearchParams;
 }
 
-export default function ForumPage({ searchParams }: IndexPageProps) {
-  const { category } = searchParams;
+export default async function ForumPage({ searchParams }: IndexPageProps) {
+  const { category } = await searchParams;
 
   return redirect(
     `/forum/latest-topics?${category ? `category=${category}` : ""}`,

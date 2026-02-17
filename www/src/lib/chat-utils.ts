@@ -121,5 +121,9 @@ export const formatAnswerWithReferences = (data: Data): string => {
     .map((url, index) => `<a href="${url}" target="_blank">[${index + 1}]</a>`)
     .join(" ");
 
+  if (url_supporting.filter(Boolean).length === 0) {
+    return `${answer.trim()}`;
+  }
+
   return `${answer.trim()}\n\nReferences: ${references}`;
 };

@@ -8,7 +8,7 @@ export interface IndexPageProps {
 }
 
 export default async function LatestPage({ searchParams }: IndexPageProps) {
-  const { category, startDate, endDate } = searchParams;
+  const { category, startDate, endDate } = await searchParams;
 
   return (
     <InfiniteTable
