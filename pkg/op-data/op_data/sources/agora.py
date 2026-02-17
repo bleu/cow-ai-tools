@@ -67,7 +67,7 @@ class AgoraProposalService(BaseScraper):
                 quorum=proposal["quorum"],
                 approvalThreshold=proposal.get("approvalThreshold"),
                 proposalData=proposal["proposalData"],
-                unformattedProposalData=proposal["unformattedProposalData"],
+                unformattedProposalData=proposal.get("unformattedProposalData"),
                 proposalResults=proposal["proposalResults"],
                 proposalType=proposal["proposalType"],
                 status=proposal["status"],
