@@ -104,7 +104,7 @@ class SnapshotService(BaseScraper):
                 update_fields=[
                     field
                     for field in SnapshotProposal._meta.fields
-                    if field != "id" and field != "Topic"
+                    if field != "id" and field != "topic"
                 ],
                 on_conflict=["externalId"],
             )
