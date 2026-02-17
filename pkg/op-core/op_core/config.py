@@ -24,8 +24,23 @@ class Config:
 
     @classmethod
     def get_tortoise_config(cls):
+        # Optimized connection pool parameters for Neon Postgres (serverless)
+        db_url = cls.DATABASE_URL
+
+        # Neon-specific connection parameters:
+        # - min_size=1: Keep minimum connections low for serverless
+        # - max_size=5: Reduce max connections to avoid hitting Neon limits
+        # - max_queries=1000: Recycle connections after 1000 queries
+        # - max_inactive_connection_lifetime=30: Recycle idle connections after 30s (Neon times out after ~60s)
+        connection_params = "min_size=1&max_size=5&max_queries=1000&max_inactive_connection_lifetime=30"
+
+        if "?" in db_url:
+            db_url += f"&{connection_params}"
+        else:
+            db_url += f"?{connection_params}"
+
         return {
-            "connections": {"default": cls.DATABASE_URL},
+            "connections": {"default": db_url},
             "apps": {
                 "models": {
                     "models": ["op_data.db.models"],

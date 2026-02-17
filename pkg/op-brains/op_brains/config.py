@@ -21,7 +21,7 @@ K_RETRIEVER = int(os.getenv("K_RETRIEVER", "8"))
 LOG_FILE = os.path.join(BASE_PATH, "logs.csv")
 
 CHAT_MODEL_OPENAI = os.getenv("CHAT_MODEL_OPENAI", "gpt-4o")
-SUMMARIZER_MODEL = os.getenv("SUMMARIZER_MODEL", CHAT_MODEL_OPENAI)
+SUMMARIZER_MODEL = os.getenv("SUMMARIZER_MODEL", "gpt-4o-mini")
 
 DB_STORAGE_PATH = importlib.resources.files(op_artifacts.dbs)
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", "")

@@ -1,0 +1,63 @@
+x-service-commons:
+  api: &api-commons
+    image: ${PROJECT_PREFIX:?error}-api-backend:${APP_REVISION:?error}
+    environment: &api-commons-environment # Database - Neon Postgres
+      DATABASE_URL: ${DATABASE_URL:?error}
+
+      # Application settings
+      FLASK_API_SECRET_KEY: ${FLASK_API_SECRET_KEY:?error}
+      SECRET: ${SECRET:?error}
+      APP_REVISION: ${APP_REVISION:?error}
+      ENV: ${ENV:-production}
+
+      # External services
+      HONEYBADGER_API_KEY: ${HONEYBADGER_API_KEY:-}
+      POSTHOG_API_KEY: ${POSTHOG_API_KEY:-}
+
+      # AI Services
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_ENDPOINT_URL: ${R2_ENDPOINT_URL:-}
+
+      MAX_CONCURRENT_SUMMARIES: ${MAX_CONCURRENT_SUMMARIES:-}
+      SUMMARIZER_MODEL: ${SUMMARIZER_MODEL:-}
+
+      # Data sources
+      AGORA_BEARER_TOKEN: ${AGORA_BEARER_TOKEN:-}
+
+services:
+  api-backend:
+    <<: *api-commons
+    build:
+      context: ../../
+      dockerfile: pkg/op-app/Dockerfile
+      cache_from:
+        - ${PROJECT_PREFIX:?error}-api-backend:latest
+    ports:
+      - "${API_PORT:-9090}:8000"
+    environment:
+      <<: *api-commons-environment
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
+      retries: 4
+      timeout: 10s
+      interval: 30s
+      start_period: 40s
+    deploy:
+      replicas: 1
+      update_config:
+        order: start-first
+      resources:
+        limits:
+          cpus: "${API_CPU_LIMIT:-4}"
+          memory: ${API_MEMORY_LIMIT:-4G}
+
+networks:
+  default:
+    name: ${PROJECT_PREFIX:?error}-default
+    external: ${EXTERNAL_RESOURCES:-false}

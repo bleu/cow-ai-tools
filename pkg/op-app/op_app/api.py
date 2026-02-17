@@ -97,6 +97,11 @@ async def capture_predict_event(question, result, user_token):
     )
 
 
+@app.route("/up", methods=["GET"])
+async def health_check():
+    return jsonify({"status": "healthy", "service": "op-app"}), 200
+
+
 @app.route("/predict", methods=["POST"])
 @rate_limit(100, timedelta(minutes=1))
 @handle_question
@@ -116,21 +121,25 @@ def after_request(response):
     return response
 
 
-@tasks.cron("0 */6 * * *")
-async def sync_all():
-    await sync_categories()
-    await sync_raw_topics()
-    await sync_topics()
-    await sync_summaries()
-    await sync_snapshot()
-    await sync_agora()
+# @tasks.cron("0 */6 * * *")
+# async def sync_all():
+#     await sync_categories()
+#     await sync_raw_topics()
+#     await sync_topics()
+#     await sync_summaries()
+#     await sync_snapshot()
+#     await sync_agora()
 
 
-@tasks.cron("0 0 1 * *")
-async def sync_indexes():
-    indexer = IncrementalIndexerService()
-    await indexer.acquire_and_save()
+# @tasks.cron("0 0 1 * *")
+# async def sync_indexes():
+#     indexer = IncrementalIndexerService()
+#     await indexer.acquire_and_save()
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=8000)
+
+
+# from op_brains.chat.utils import process_question
+# run_async(process_question("how can i participate in voting on Optimism governance proposals?", []))
