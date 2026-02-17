@@ -4,7 +4,7 @@ export interface SearchParams {
   [key: string]: string | string[] | undefined;
 }
 export interface IndexPageProps {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }
 
 export default async function LatestPage({ searchParams }: IndexPageProps) {
