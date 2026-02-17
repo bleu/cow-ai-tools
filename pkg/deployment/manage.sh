@@ -83,12 +83,12 @@ cmd_up() {
     fi
 
     echo ">>> Building API image..."
-    EXTERNAL_RESOURCES=true docker compose \
+    EXTERNAL_RESOURCES="${EXTERNAL_RESOURCES:-false}" docker compose \
         -p "${PROJECT_PREFIX}-stack" -f docker-stack.yml \
         build --build-arg BUILDKIT_INLINE_CACHE=1
 
     echo ">>> Deploying stack..."
-    EXTERNAL_RESOURCES=true docker stack deploy \
+    EXTERNAL_RESOURCES="${EXTERNAL_RESOURCES:-false}" docker stack deploy \
         --compose-file docker-stack.yml \
         --prune --detach --with-registry-auth --resolve-image never \
         "${PROJECT_PREFIX}"
