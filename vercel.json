@@ -6,5 +6,9 @@
       "memory": 3008,
       "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/up", "destination": "/api?path=up" },
+    { "source": "/api/predict", "destination": "/api?path=predict" }
+  ]
 }

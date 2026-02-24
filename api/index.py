@@ -17,10 +17,31 @@ for p in ("pkg/op-core", "pkg/op-artifacts", "pkg/op-data", "pkg/op-brains", "pk
 from op_app.api import app as _quart_app
 
 
+def _path_from_query(scope):
+    """Restore path from rewrite query param (Vercel: /api/up -> /api?path=up)."""
+    qs = scope.get("query_string") or b""
+    if isinstance(qs, bytes):
+        qs = qs.decode("utf-8", "replace")
+    for part in qs.split("&"):
+        if part.startswith("path="):
+            sub = part[5:].strip()
+            if sub:
+                return "/api/" + sub
+    return None
+
+
 async def _strip_api_prefix(scope, receive, send):
-    if scope.get("type") == "http" and scope.get("path", "").startswith("/api"):
-        scope = dict(scope)
-        scope["path"] = scope["path"][4:] or "/"
+    if scope.get("type") != "http":
+        await _quart_app(scope, receive, send)
+        return
+    scope = dict(scope)
+    path = scope.get("path") or ""
+    # Vercel rewrites send /api/up and /api/predict to /api?path=up|predict
+    from_rewrite = _path_from_query(scope)
+    if from_rewrite:
+        path = from_rewrite
+    if path.startswith("/api"):
+        scope["path"] = path[4:] or "/"
     await _quart_app(scope, receive, send)
 
 
