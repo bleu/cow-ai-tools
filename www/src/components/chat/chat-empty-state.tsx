@@ -5,6 +5,8 @@ import useMobileStore from "@/states/use-mobile-state";
 import { Button } from "../ui/button";
 import { suggestions } from "./chat-suggestions";
 
+const isCow = typeof process !== "undefined" && process.env.NEXT_PUBLIC_BRAND === "cow";
+
 export function ChatEmptyState({
   onSuggestionClick,
 }: {
@@ -13,16 +15,26 @@ export function ChatEmptyState({
   return (
     <div className="flex flex-col items-center justify-center h-full p-4">
       <div className="mb-8">
-        <Image
-          src="/op-logo.svg"
-          alt="Optimism logo"
-          width={75}
-          height={75}
-          className="w-[75px] md:w-[100px]"
-        />
+        {isCow ? (
+          <Image
+            src="/cow-ai-logo.png"
+            alt="CoW AI"
+            width={100}
+            height={100}
+            className="w-[75px] md:w-[100px] h-[75px] md:h-[100px] rounded-full object-cover"
+          />
+        ) : (
+          <Image
+            src="/op-logo.svg"
+            alt="Optimism logo"
+            width={75}
+            height={75}
+            className="w-[75px] md:w-[100px]"
+          />
+        )}
       </div>
       <h2 className="text-lg md:text-2xl font-bold mb-4 text-center text-chat-secondary">
-        How can I help you today?
+        {isCow ? "CoW AI — ask about the Order Book API" : "How can I help you today?"}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
         {suggestions.map((suggestion) => (

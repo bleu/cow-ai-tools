@@ -9,6 +9,8 @@ import { useEffect, useRef } from "react";
 import { buttonVariants } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 
+const isCow = typeof process !== "undefined" && process.env.NEXT_PUBLIC_BRAND === "cow";
+
 export default function ChatBottombar() {
   const inputMessage = useChatStore.use.inputMessage();
   const setInputMessage = useChatStore.use.setInputMessage();
@@ -66,7 +68,7 @@ export default function ChatBottombar() {
           onKeyDown={handleKeyPress}
           onChange={handleInputChange}
           name="message"
-          placeholder="Message GovGPT"
+          placeholder={isCow ? "Ask about Order Book API..." : "Message GovGPT"}
           className="w-full border rounded-full flex items-center h-12 resize-none overflow-hidden bg-background py-3 pr-10"
           disabled={isStreaming}
         />
@@ -74,15 +76,16 @@ export default function ChatBottombar() {
           href="#"
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon" }),
-            "absolute right-2 top-1/2 transform -translate-y-1/2",
-            "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white shrink-0",
+            "absolute right-2 top-1/2 transform -translate-y-1/2 shrink-0 group",
+            "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white",
+            isCow && "hover:text-cow",
             {
               "opacity-40": !inputMessage.trim() || isStreaming,
             },
           )}
           onClick={handleSend}
         >
-          <SendHorizontal size={20} className="text-muted-foreground" />
+          <SendHorizontal size={20} className={cn("text-muted-foreground", isCow && "group-hover:text-cow")} />
         </Link>
       </div>
     </div>

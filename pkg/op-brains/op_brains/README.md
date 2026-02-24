@@ -1,5 +1,7 @@
 # op-brains
 
+This package is **Optimism-only**: governance docs, forum, summaries, RAG chat. There is no CoW code inside; for CoW use the **cow-brains** package. See **[docs/PROJECTS.md](../../../docs/PROJECTS.md)** for setup.
+
 ## The package
 
 This package contains the core components of the chatbot system and the summarizer. The package is structured as follows:

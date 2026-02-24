@@ -1,6 +1,6 @@
-import { FileText, HelpCircle, PieChart, Vote } from "lucide-react";
+import { FileText, HelpCircle, PieChart, Vote, Code, AlertCircle } from "lucide-react";
 
-export const suggestions = [
+const optimismSuggestions = [
   {
     icon: <FileText size={20} />,
     label: "Explain recent proposal",
@@ -22,3 +22,29 @@ export const suggestions = [
     value: "What is the Optimism Collective and how does it work?",
   },
 ] as const;
+
+const cowSuggestions = [
+  {
+    icon: <Code size={20} />,
+    label: "buyAmount and slippage",
+    value: "How do I set buyAmount with slippage when creating an order?",
+  },
+  {
+    icon: <Code size={20} />,
+    label: "Token approval (gasless)",
+    value: "How do I set token approval via ABI for a gasless swap?",
+  },
+  {
+    icon: <HelpCircle size={20} />,
+    label: "Fast vs optimal quote",
+    value: "When should I use fast vs optimal quoting?",
+  },
+  {
+    icon: <AlertCircle size={20} />,
+    label: "Error troubleshooting",
+    value: "What does InsufficientBalance mean and how do I fix it?",
+  },
+] as const;
+
+const brand = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_BRAND : "";
+export const suggestions = brand === "cow" ? cowSuggestions : optimismSuggestions;

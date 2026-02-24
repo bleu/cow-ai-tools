@@ -20,6 +20,17 @@ from op_brains.documents import DataExporter
 TODAY = time.strftime("%Y-%m-%d")
 
 
+def _escape_format_braces(obj: Any) -> Any:
+    """Escape curly braces in string values so str.format() does not interpret JSON/code as placeholders."""
+    if isinstance(obj, str):
+        return obj.replace("{", "{{").replace("}", "}}")
+    if isinstance(obj, dict):
+        return {k: _escape_format_braces(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_escape_format_braces(v) for v in obj]
+    return obj
+
+
 class Prompt:
     class NewSearch(BaseModel):
         user_knowledge: str = Field(
@@ -62,22 +73,25 @@ When adding keywords, adhere to these guidelines:
         )
 
     class Answer(BaseModel):
-        answer: str = Field("""Provide an answer. Some guidelines to follow:
+        answer: str = Field(
+            """Provide an answer. Some guidelines to follow:
 - Directly address the user's question. Never write "according to the context", "based on the provided context" or similar phrases.
 - Be polite, informative, assertive, objective, and brief.
 - Avoid jargon and explain any technical terms.
 - Never refer to past events as if they were happening now or in the future.
 - Keep in mind the <query>. Don't answer an user question if you don't know the answer to this question. What you know is listed in the knowledge_summary.
-- Never make up information.""")
+- Never make up information."""
+        )
         url_supporting: List[str] = Field(
             default=[],
             description="""The URL sources of the information you have. Never cite URLS that were not exactly provided.""",
         )
 
     @staticmethod
-    def preprocessor(llm: ChatOpenAI | ChatAnthropic, **kwargs):
+    def preprocessor(llm: ChatOpenAI | ChatAnthropic, scope: Optional[str] = None, **kwargs):
+        _scope = scope if scope is not None else SCOPE
         preprocessor_header = f"""
-You are a part of a helpful chatbot assistant system that provides information about {SCOPE}.
+You are a part of a helpful chatbot assistant system that provides information about {_scope}.
 
 The context of the conversation is as follows: 
 
@@ -95,33 +109,36 @@ The user now provided the following query:
         class Preprocessor(BaseModel):
             related_to_scope: bool = Field(
                 default=False,
-                description=f"""Return False if you are 100% sure that the user's query is not related to the scope of {SCOPE}. Keep in mind that, most of the time, the user will ask a question related to the scope. 
-                                           
-            Some terms as "Cycle", "Airdrop", "Citizens' House", "Token House", "Grant", "Proposal", "Retro Funding", "OP", "NERD", "Law of Chains"... are related to the scope. If a person/user is referred to, it is likely to be a member of the Optimism Collectiv Community.""",
+                description=f"""Return False if you are 100% sure that the user's query is not related to the scope of {_scope}. Keep in mind that, most of the time, the user will ask a question related to the scope.""",
             )
 
             needs_info: bool = Field(
                 default=False,
-                description=f"""If related_to_scope is False, needs_info should be False. Else, return True if the user is not asking you to provide any information or if all the infor you need is in the <conversation_history>. Never make up information. If you don't have enough information to answer the user's query, needs_info should be True.""",
+                description="""If related_to_scope is False, needs_info should be False. Else, return True if the user is not asking you to provide any information or if all the infor you need is in the <conversation_history>. Never make up information. If you don't have enough information to answer the user's query, needs_info should be True.""",
             )
 
             answer: str = Field(
                 default=None,
-                description=f"""Only if needs_info is False, that is, if you have enough information to answer the user's query, provide an answer to the user's query. Don't make up information. If related_to_scope is False, answer should be 'I'm sorry, but I can only answer questions about {SCOPE}. Is there anything specific about {SCOPE} you'd like to know?'""",
+                description=f"""Only if needs_info is False, that is, if you have enough information to answer the user's query, provide an answer to the user's query. Don't make up information. If related_to_scope is False, answer should be 'I'm sorry, but I can only answer questions about {_scope}. Is there anything specific about {_scope} you'd like to know?'""",
             )
 
             expansion: Prompt.NewSearch = Field(
                 default=None,
-                description=f"""Only if needs_info is True, that is, if you don't have enough information to answer the user's query, provide a new search that encompasses the information that is missing. The system will perform a search. This is going to be used by the system to retrieve a context that can provide this information. The user won't see this.""",
+                description="""Only if needs_info is True, that is, if you don't have enough information to answer the user's query, provide a new search that encompasses the information that is missing. The system will perform a search. This is going to be used by the system to retrieve a context that can provide this information. The user won't see this.""",
             )
 
         llm = llm.with_structured_output(Preprocessor)
-        return llm.invoke(preprocessor_header.format(**kwargs)).dict()
+        safe_kwargs = _escape_format_braces(kwargs)
+        return llm.invoke(preprocessor_header.format(**safe_kwargs)).dict()
 
     @staticmethod
-    def responder(llm: ChatOpenAI | ChatAnthropic, final: bool = False, **kwargs):
+    def responder(llm: ChatOpenAI | ChatAnthropic, final: bool = False, scope: Optional[str] = None, responder_extra: str = "", **kwargs):
+        _scope = scope if scope is not None else SCOPE
+        # Escape braces in scope/responder_extra so they are not interpreted as placeholders by .format() later
+        _scope_safe = (_scope or "").replace("{", "{{").replace("}", "}}")
+        _responder_extra_safe = (responder_extra or "").replace("{", "{{").replace("}", "}}")
         responder_header = f"""
-You are a helpful assistant that provides information about {SCOPE}. Your goal is to give polite, informative, assertive, objective, and brief answers. Avoid jargon and explain any technical terms, as the user may not be a specialist.
+You are a helpful assistant that provides information about {_scope_safe}. Your goal is to give polite, informative, assertive, objective, and brief answers. Avoid jargon and explain any technical terms, as the user may not be a specialist.{_responder_extra_safe}
 
 An user inserted the following query:
 <query>
@@ -167,12 +184,29 @@ Today's date is {TODAY}. Be aware of information that might be outdated.
                 )
 
         llm = llm.with_structured_output(Responder)
+        safe_kwargs = _escape_format_braces(kwargs)
         try:
-            out = llm.invoke(responder_header.format(**kwargs))
-        except:
+            out = llm.invoke(responder_header.format(**safe_kwargs))
+        except Exception as e:
+            import logging
+            import traceback
+            log = logging.getLogger(__name__)
+            log.warning(
+                "Responder LLM invoke failed: %s: %s\nTraceback: %s",
+                type(e).__name__, e, traceback.format_exc(),
+            )
             return None
-        print(out)
-        return out.dict()
+        try:
+            if hasattr(out, "model_dump"):
+                return out.model_dump()
+            return out.dict()
+        except Exception as e:
+            import logging
+            import traceback
+            logging.getLogger(__name__).warning(
+                "Responder output serialization failed: %s\nTraceback: %s", e, traceback.format_exc()
+            )
+            return None
 
 
 class ContextHandling:
@@ -185,6 +219,12 @@ class ContextHandling:
 
 <content>{CONTENT}</content>
 </summary_from_forum_thread>
+
+"""
+    doc_fragment_template = """
+<reference url="{URL}">
+<content>{CONTENT}</content>
+</reference>
 
 """
 
@@ -240,7 +280,7 @@ class ContextHandling:
         urls = list(context.keys())
         out = []
         for c in context.values():
-            type_db = c.metadata["type_db_info"]
+            type_db = c.metadata.get("type_db_info", "")
             match type_db:
                 case "forum_thread_summary":
                     out.append(
@@ -252,9 +292,21 @@ class ContextHandling:
                             CONTENT=c.page_content,
                         )
                     )
+                case "docs_fragment" | "api-endpoint" | "api-schema":
+                    out.append(
+                        ContextHandling.doc_fragment_template.format(
+                            URL=c.metadata.get("url", ""),
+                            CONTENT=c.page_content,
+                        )
+                    )
                 case _:
-                    pass
-
+                    if c.metadata.get("url") and c.page_content:
+                        out.append(
+                            ContextHandling.doc_fragment_template.format(
+                                URL=c.metadata["url"],
+                                CONTENT=c.page_content,
+                            )
+                        )
         return "".join(out), urls
 
     @staticmethod
@@ -264,19 +316,25 @@ class ContextHandling:
         if type_search == "factual" or type_search == "ocurrence":
             return context[:k]
         elif type_search == "recent":
-            all_contexts_df = await DataExporter.get_dataframe(only_not_embedded=False)
             urls = [c.metadata["url"] for c in context]
-            contexts = all_contexts_df[all_contexts_df["url"].isin(urls)].iloc[:k]
-            return contexts.content.tolist()
+            subset = contexts_df[contexts_df["url"].isin(urls)].iloc[:k]
+            return subset.content.tolist()
 
 
 class RetrieverBuilder:
     @staticmethod
     async def build_faiss_retriever(
+        faiss_path=None,
+        embedding_model=None,
         **retriever_pars,
     ):
-        db = await load_faiss_indexes()
-        return lambda query: db.similarity_search(query, **retriever_pars)
+        if faiss_path is not None and embedding_model is not None:
+            db = await load_faiss_indexes(faiss_path=faiss_path, embedding_model=embedding_model)
+        else:
+            db = await load_faiss_indexes()
+        async def _retriever(query, contexts_df=None, **kwargs):
+            return db.similarity_search(query, **retriever_pars)
+        return _retriever
 
     @staticmethod
     def build_index(index, index_embed, k_max, treshold):

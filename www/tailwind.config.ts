@@ -20,6 +20,14 @@ const config = {
     extend: {
       colors: {
         optimism: "#FF0420",
+        cow: {
+          DEFAULT: "#33D0FF",
+          light: "#5DD9FF",
+          dark: "#2AB8E6",
+          muted: "#231C3D",
+          bg: "#130C22",
+          surface: "#231C3D",
+        },
         chat: {
           primary: '#F6F6F6',
           secondary: '#787878'

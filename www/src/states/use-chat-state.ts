@@ -55,11 +55,16 @@ const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
   return store;
 };
 
+const assistantName =
+  typeof process !== "undefined" && process.env.NEXT_PUBLIC_BRAND === "cow"
+    ? "CoW AI"
+    : "Optimism GovGPT";
+
 const createAssistantMessage = (chatId: string): Message => {
   return generateMessageParams(
     chatId,
     { answer: "", url_supporting: [] },
-    "Optimism GovGPT",
+    assistantName,
   );
 };
 
@@ -79,11 +84,11 @@ function migrateState(persistedState: any): ChatStoreState {
             ...message,
             data: {
               answer:
-                message.name === "Optimism GovGPT"
+                (message.name === "Optimism GovGPT" || message.name === "CoW AI")
                   ? message.message.answer
                   : message.message,
               url_supporting:
-                message.name === "Optimism GovGPT"
+                (message.name === "Optimism GovGPT" || message.name === "CoW AI")
                   ? message.message.url_supporting
                   : [],
             },

@@ -1,21 +1,49 @@
 import os
+import re
 from op_brains.chat import model_utils
 from op_brains.chat.system_structure import RAGSystem
 from typing import Dict, Any, List, Tuple
 from op_brains.documents import DataExporter
 import numpy as np
 import io
-from op_data.db.models import ManagedIndex
 import pickle
 import zlib
 from op_brains.config import DB_STORAGE_PATH, CHAT_MODEL
-from op_data.sources.incremental_indexer import IncrementalIndexerService
 import json
 import asyncio
 from aiocache import cached
-from op_core.logger import get_logger
 
-logger = get_logger(__name__)
+_CODE_BLOCK_RE = re.compile(r"```[\s\S]*?```")
+
+
+def normalize_answer_text(text: str) -> str:
+    """Colapsa todas as quebras fora de blocos de código: todo \\n e \\n\\n vira espaço.
+    O LLM costuma enviar \\n\\n entre frases curtas, gerando muitos <p>; unimos tudo num parágrafo por segmento.
+    """
+    if not text or "\n" not in text:
+        return text
+    text = re.sub(r"[ \t]{2,}\r?\n", " ", text)
+
+    def process_part(part: str) -> str:
+        part = part.replace("\r\n", "\n").replace("\r", "\n")
+        # Colapsa TODOS os \\n (simples e duplo) em espaço para um único parágrafo por segmento
+        one_line = " ".join(part.splitlines())
+        return re.sub(r"[ \t]+", " ", one_line).strip()
+
+    parts: List[str] = []
+    last = 0
+    for m in _CODE_BLOCK_RE.finditer(text):
+        parts.append(process_part(text[last : m.start()]))
+        parts.append(m.group(0))
+        last = m.end()
+    parts.append(process_part(text[last:]))
+    return "".join(parts)
+
+try:
+    from op_core.logger import get_logger
+    logger = get_logger(__name__)
+except Exception:
+    logger = None
 
 
 def transform_memory_entries(entries: List[Dict[str, str]]) -> List[Tuple[str, str]]:
@@ -35,6 +63,9 @@ def transform_memory_entries(entries: List[Dict[str, str]]) -> List[Tuple[str, s
 
 
 async def build_managed_index(k_max=5, treshold=0.95, indexType="questions"):
+    from op_data.db.models import ManagedIndex
+    from op_data.sources.incremental_indexer import IncrementalIndexerService
+
     index = (
         await ManagedIndex.filter(indexType=indexType).order_by("-createdAt").first()
     )
@@ -51,7 +82,8 @@ async def build_managed_index(k_max=5, treshold=0.95, indexType="questions"):
     embed_index = loaded_data["index_embed"]
     index_dict = json.loads(managed_index_json)
 
-    logger.info(f"Building managed index, {indexType}, {len(index_dict.keys())}")
+    if logger:
+        logger.info(f"Building managed index, {indexType}, {len(index_dict.keys())}")
     return model_utils.RetrieverBuilder.build_index(
         index_dict, embed_index, k_max, treshold
     )
@@ -142,11 +174,11 @@ async def process_question(
                     )
                     if len(context) > 0:
                         return context
-                return default_retriever(query["question"])
+                return await default_retriever(query["question"])
 
             if "query" in query:
                 if reasoning_level > 1:
-                    return default_retriever(query["query"])
+                    return await default_retriever(query["query"])
             return []
 
         rag_model = RAGSystem(
@@ -164,9 +196,17 @@ async def process_question(
         )
 
         # logger.log_query(question, result)
-        return {"data": result["answer"], "error": None}
+        answer_data = result["answer"]
+        return {
+            "data": {
+                "answer": normalize_answer_text(answer_data.get("answer") or ""),
+                "url_supporting": answer_data.get("url_supporting") or [],
+            },
+            "error": None,
+        }
     except Exception as e:
-        logger.error(f"Error. An unexpected error occurred during prediction: {str(e)}")
+        if logger:
+            logger.error(f"Error. An unexpected error occurred during prediction: {str(e)}")
         return {
             "data": {},
             "error": "An unexpected error occurred during prediction",

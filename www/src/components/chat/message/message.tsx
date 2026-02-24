@@ -23,7 +23,8 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
     setIsEditable(true);
   };
 
-  const isAnswer = message.name === "Optimism GovGPT";
+  const isAnswer =
+    message.name === "Optimism GovGPT" || message.name === "CoW AI" || message.name === "CoW Protocol";
 
   return (
     <div

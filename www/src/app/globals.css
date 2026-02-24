@@ -4,6 +4,8 @@
  
 @layer base {
   :root {
+    --brand-accent: 349 100% 50%; /* optimism #FF0420 */
+    --brand-accent-muted: 349 100% 97%;
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
 
@@ -33,6 +35,56 @@
     --ring: 240 10% 3.9%;
  
     --radius: 0.5rem;
+  }
+
+  [data-brand="cow"] {
+    --brand-accent: 194 100% 60%; /* CoW Swap cyan #33D0FF */
+    --brand-accent-muted: 194 100% 15%;
+    --background: 252 48% 9%; /* CoW Swap dark #130C22 */
+    --foreground: 0 0% 98%;
+    --card: 252 37% 17%; /* #231C3D */
+    --card-foreground: 0 0% 98%;
+    --popover: 252 37% 17%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 194 100% 60%;
+    --primary-foreground: 252 48% 9%;
+    --secondary: 252 30% 22%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 252 37% 17%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 194 100% 60%;
+    --accent-foreground: 252 48% 9%;
+    --border: 252 25% 25%;
+    --input: 252 25% 25%;
+    --ring: 194 100% 60%;
+  }
+
+  [data-brand="cow"] .text-chat-secondary {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  [data-brand="cow"] .prose,
+  [data-brand="cow"] .prose p,
+  [data-brand="cow"] .prose li,
+  [data-brand="cow"] .cow-chat-message,
+  [data-brand="cow"] .cow-chat-message p,
+  [data-brand="cow"] .cow-chat-message li {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  [data-brand="cow"] .prose a,
+  [data-brand="cow"] .cow-chat-message a {
+    color: #33d0ff;
+  }
+  [data-brand="cow"] .bg-chat-primary {
+    background-color: #231c3d;
+  }
+  [data-brand="cow"] .hover\:bg-gray-100:hover {
+    background-color: hsl(252 30% 22%);
+  }
+  [data-brand="cow"] .text-gray-700 {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  [data-brand="cow"] .border-gray-200 {
+    border-color: hsl(252 25% 25%);
   }
  
   .dark {

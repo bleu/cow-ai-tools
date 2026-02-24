@@ -14,7 +14,7 @@ import importlib.resources
 from langchain_community.vectorstores import FAISS
 from langchain_voyageai import VoyageAIRerank
 import datetime as dt
-from op_data.db.models import RawTopic
+from op_data.db.models import RawTopic  # noqa: F401
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -117,12 +117,14 @@ async def rate_limited_llm_invoke(llm, prompt):
 
 async def process_context(context, llm, semaphore):
     async with semaphore:  # Limit concurrency
-        type_db = context.metadata["type_db_info"]
+        type_db = context.metadata.get("type_db_info", "docs_fragment")
 
         if type_db == "docs_fragment":
             TYPE_GUIDELINES = "It is a post from the Optimism Governance Documentation. As the documentation is a place for official information, the content should be relevant and important. Try to encapsulate the whole content in your questions. Aim to generate at least 5 questions, depending on the complexity and richness of the fragment."
         elif type_db == "forum_thread_summary":
             TYPE_GUIDELINES = "It is a summary of a forum thread from the Optimism Governance Forum. As the forum is a place for community discussion, the content may vary. If you understand that the content is unimportant or irrelevant, return <nothing>."
+        else:
+            TYPE_GUIDELINES = "Generate questions and keywords relevant to the content. Aim for at least 3 questions."
 
         prompt = prompt_question_generation.format(
             CONTEXT=context.page_content, SCOPE=SCOPE, TYPE_GUIDELINES=TYPE_GUIDELINES

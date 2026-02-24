@@ -3,8 +3,10 @@ import { useState } from "react";
 
 import type { Data, Message } from "@/app/data";
 import { FormattedMessage } from "@/components/ui/formatted-message";
+
+const isCow = typeof process !== "undefined" && process.env.NEXT_PUBLIC_BRAND === "cow";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
-import { formatAnswerWithReferences } from "@/lib/chat-utils";
+import { formatAnswerWithReferences, normalizeAnswerLineBreaks } from "@/lib/chat-utils";
 import { cn } from "@/lib/utils";
 
 import { useChatStore } from "@/states/use-chat-state";
@@ -37,16 +39,15 @@ export const MessageContent: React.FC<MessageContentProps> = ({
   };
 
   const messageContent = (data: Data) => {
-    if (data.url_supporting?.length === 0) return data.answer;
-    const formattedMessage = formatAnswerWithReferences(data);
-    return formattedMessage.replace(/\n/g, "<br />");
+    if (data.url_supporting?.length === 0) return normalizeAnswerLineBreaks(data.answer ?? "");
+    return formatAnswerWithReferences(data);
   };
 
   if (loadingMessageId === message.id) {
     return <LoadingIndicator />;
   }
 
-  if (isEditable && message.name !== "Optimism GovGPT") {
+  if (isEditable && message.name !== "Optimism GovGPT" && message.name !== "CoW AI") {
     return (
       <EditableMessage
         editMessageContent={editMessageContent}
@@ -60,8 +61,10 @@ export const MessageContent: React.FC<MessageContentProps> = ({
   return (
     <div
       className={cn(
-        "md:max-w-[70%]",
+        "min-w-0 md:max-w-[70%]",
+        isCow && "cow-chat-message",
         message.name !== "Optimism GovGPT" &&
+          message.name !== "CoW AI" &&
           "bg-chat-primary rounded-lg p-4 my-4 max-w-[70%]",
       )}
     >

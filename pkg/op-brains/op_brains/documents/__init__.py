@@ -1,21 +1,17 @@
+"""
+Document sources for Optimism RAG. For CoW, use the cow_brains package.
+"""
 import pandas as pd
-from op_brains.documents.optimism import (
-    FragmentsProcessingStrategy,
-    SummaryProcessingStrategy,
-)
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Type
 import asyncio
 import aiohttp
 import time
 
-chat_sources = [
-    [
-        FragmentsProcessingStrategy,
-    ],
-    [
-        SummaryProcessingStrategy,
-    ],
-]
+from op_brains.documents.optimism import (
+    FragmentsProcessingStrategy,
+    SummaryProcessingStrategy,
+)
+from op_brains.optimism import chat_sources  # optimism-only
 
 
 class DataExporter:
@@ -23,7 +19,7 @@ class DataExporter:
     _dataframe_cache_time: Optional[float] = None
     _dataframe_cache_with_embedded: Optional[bool] = None
     _cache_lock = asyncio.Lock()
-    CACHE_TTL = 60 * 60 * 24  # day in seconds
+    CACHE_TTL = 60 * 60 * 24
 
     @classmethod
     async def get_dataframe(cls, only_not_embedded=False):
@@ -62,10 +58,8 @@ class DataExporter:
             for source in [x for xs in chat_sources for x in xs]:
                 tasks.append(cls._fetch_documents(session, source, only_not_embedded))
             results = await asyncio.gather(*tasks)
-
             for result in results:
                 out.update(result)
-
         return out
 
     @staticmethod

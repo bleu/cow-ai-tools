@@ -17,7 +17,7 @@ class RAGSystem:
     number_of_models: int = 2
 
     def __init__(self, **kwargs):
-        self.REASONING_LIMIT = kwargs.get("REASONING_LIMIT", 3)
+        self.REASONING_LIMIT = kwargs.get("REASONING_LIMIT") or kwargs.get("reasoning_limit", 3)
         self.models_to_use = kwargs.get("models_to_use")
         self.retriever = kwargs.get("retriever")
         self.context_filter = kwargs.get("context_filter")
@@ -68,36 +68,32 @@ class RAGSystem:
         if LLM is None:
             LLM = self.llm[1]
 
-            output_LLM = self.system_prompt_responder(
-                LLM,
-                final=final,
-                QUERY=query,
-                CONTEXT=context,
-                USER_KNOWLEDGE=user_knowledge,
-                SUMMARY_OF_EXPLORED_CONTEXTS=summary_of_explored_contexts,
+        output_LLM = self.system_prompt_responder(
+            LLM,
+            final=final,
+            QUERY=query,
+            CONTEXT=context,
+            USER_KNOWLEDGE=user_knowledge,
+            SUMMARY_OF_EXPLORED_CONTEXTS=summary_of_explored_contexts,
+        )
+
+        if output_LLM is None:
+            return ("", [], ""), False
+
+        knowledge_summary = output_LLM["knowledge_summary"]
+        if output_LLM["answer"] is not None:
+            output_LLM["answer"]["url_supporting"].extend(
+                [k["url_supporting"].strip() for k in knowledge_summary]
             )
-
-            if output_LLM is None:
-                return ("", [], ""), False
-
-            knowledge_summary = output_LLM["knowledge_summary"]
-            if not output_LLM["answer"] is None:
-                output_LLM["answer"]["url_supporting"].extend(
-                    [k["url_supporting"].strip() for k in knowledge_summary]
-                )
-                output_LLM["answer"]["url_supporting"] = list(
-                    set(output_LLM["answer"]["url_supporting"])
-                )
-                return output_LLM["answer"], True
-            else:
-                new_questions = output_LLM["search"]["questions"]
-                new_questions = [{"question": q} for q in new_questions]
-
-                type_search = output_LLM["search"]["type_search"]
-
-                return [knowledge_summary, new_questions, type_search], False
-
-            raise Exception("ERROR: Unexpected error during prediction")
+            output_LLM["answer"]["url_supporting"] = list(
+                set(output_LLM["answer"]["url_supporting"])
+            )
+            return output_LLM["answer"], True
+        else:
+            new_questions = output_LLM["search"]["questions"]
+            new_questions = [{"question": q} for q in new_questions]
+            type_search = output_LLM["search"]["type_search"]
+            return [knowledge_summary, new_questions, type_search], False
 
     async def predict(
         self,
@@ -125,11 +121,21 @@ class RAGSystem:
             user_knowledge, questions, type_search = preprocess_reasoning
             result = "", questions, type_search
             reasoning_level = 0
+            # Hard cap so we never loop indefinitely if responder never returns answer
+            max_level = max(self.REASONING_LIMIT + 2, 5)
+
             while not is_enough:
+                if reasoning_level >= max_level:
+                    result = {"answer": "I couldn't find enough information to answer. Please try rephrasing or ask something more specific.", "url_supporting": []}
+                    is_enough = True
+                    if verbose:
+                        print(f"-------Hit max reasoning level {max_level}, returning fallback.\n")
+                    break
+
                 summary_of_explored_contexts, questions, type_search = result
                 try:
                     questions = [{"query": query}] + questions
-                except:
+                except Exception:
                     pass
 
                 context_dict = {
@@ -161,6 +167,13 @@ class RAGSystem:
                     summary_of_explored_contexts,
                     final=reasoning_level > self.REASONING_LIMIT,
                 )
+
+                # If responder failed (e.g. LLM error) but we have context, return a fallback so we don't loop
+                if not is_enough and context and isinstance(result, (list, tuple)) and len(result) == 3 and result[0] == "" and result[1] == []:
+                    result = {"answer": "I found relevant documentation but couldn't generate a full answer. Please try rephrasing or ask a more specific question.", "url_supporting": list(context_urls)}
+                    is_enough = True
+                    if verbose:
+                        print("-------Responder returned empty with context; using fallback.\n")
 
                 if verbose:
                     print(f"-------Result: {result}\n")

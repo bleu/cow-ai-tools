@@ -1,2 +1,4 @@
-export SECRET=your_secret_key
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/op-ai-tools
+# Choose one project and copy its env example. Do not mix.
+#   CoW:       cp .envrc.example.cow .envrc
+#   Optimism:  cp .envrc.example.optimism .envrc
+# See docs/PROJECTS.md for details.

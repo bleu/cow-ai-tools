@@ -16,3 +16,6 @@ __pycache__
 **/.envrc
 .aider*
 .env.docker
+
+# CoW PoC generated data (optional: remove to track artifact)
+data/cow-docs/

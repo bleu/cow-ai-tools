@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "cow-brains"
+version = "0.1.0"
+description = "CoW Protocol RAG: docs + Order Book API. No OP/Optimism code."
+authors = ["Bleu"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+op-brains = { path = "../op-brains", develop = true }
+pandas = "^2.2.2"
+langchain-core = "~0.2"
+langchain-text-splitters = "^0.2.2"
+langchain-community = "^0.2.6"
+pyyaml = "^6.0.2"
+python-dotenv = "^1.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

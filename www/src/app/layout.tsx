@@ -16,9 +16,13 @@ const robotoFlex = Roboto_Flex({
   display: "swap",
 });
 
+const isCowBrand =
+  typeof process !== "undefined" && process.env.NEXT_PUBLIC_BRAND === "cow";
 export const metadata: Metadata = {
-  title: "Optimism GovGPT",
-  description: "Ask me anything about Optimism Governance!",
+  title: isCowBrand ? "CoW AI" : "Optimism GovGPT",
+  description: isCowBrand
+    ? "Ask about CoW Protocol Order Book API and integration."
+    : "Ask me anything about Optimism Governance!",
 };
 
 export const viewport = {
@@ -43,7 +47,10 @@ export default function RootLayout({
         {/* TODO OP-67: fix - this is requesting the route for a logo <link rel="icon" href="op-logo.svg" type="image/x-icon" /> */}
       </head>
       <CSPostHogProvider>
-        <body className="flex flex-col min-h-screen text-primary">
+        <body
+          className="flex flex-col min-h-screen text-primary"
+          data-brand={isCowBrand ? "cow" : undefined}
+        >
           <div className="flex flex-1">
             {/* <PostHogPageView /> */}
             <Toaster />

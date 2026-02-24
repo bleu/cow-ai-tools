@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "concurrently 'yarn dev:next' 'yarn start:mock'",
     "dev:next": "next dev",
+    "dev:no-corepack": "next dev",
     "build": "next build",
     "start": "next start",
     "lint:fix": "yarn biome check --write ./src",

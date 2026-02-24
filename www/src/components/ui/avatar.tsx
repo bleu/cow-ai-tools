@@ -6,13 +6,25 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const BORING_AVATAR_COLORS = [
+const OPTIMISM_AVATAR_COLORS = [
   "#FF0420",
   "#FFD700",
   "#87CEEB",
   "#7CFC00",
   "#FF7F50",
 ];
+
+const COW_AVATAR_COLORS = [
+  "#33D0FF",
+  "#231C3D",
+  "#5DD9FF",
+  "#130C22",
+  "#2AB8E6",
+];
+
+const isCow =
+  typeof process !== "undefined" && process.env.NEXT_PUBLIC_BRAND === "cow";
+const BORING_AVATAR_COLORS = isCow ? COW_AVATAR_COLORS : OPTIMISM_AVATAR_COLORS;
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,

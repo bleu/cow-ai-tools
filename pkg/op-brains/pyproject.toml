@@ -9,7 +9,6 @@ readme = "README.md"
 python = "^3.12"
 pandas = "^2.2.2"
 langchain-openai = "^0.1.14"
-langchain-core = "~0.2"
 langchain-text-splitters = "^0.2.2"
 langchain-community = "^0.2.6"
 weave = "^0.50.9"
@@ -26,7 +25,12 @@ op-artifacts = { path = "../op-artifacts", develop = true }
 op-core = { path = "../op-core", develop = true }
 tqdm = "^4.66.5"
 langchain-voyageai = "^0.1.1"
+langchain-core = "~0.2"
 aiocache = "^0.12.3"
+google-generativeai = "^0.8.0"
+json-repair = "^0.24"
+sentence-transformers = "^5.2.3"
+pyyaml = "^6.0.2"
 
 
 [tool.poetry.group.dev.dependencies]

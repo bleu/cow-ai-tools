@@ -16,7 +16,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ message }) => {
   const { handleCopyMessage } = useCopyMessage();
   const isStreaming = useChatStore.use.isStreaming();
 
-  if (isStreaming || message.name !== "Optimism GovGPT") {
+  if (isStreaming || (message.name !== "Optimism GovGPT" && message.name !== "CoW AI")) {
     return null;
   }
 
