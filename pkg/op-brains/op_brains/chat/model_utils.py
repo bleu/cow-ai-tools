@@ -7,7 +7,7 @@ import io
 import pandas as pd
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from op_brains.retriever.connect_faiss import load_faiss_indexes
 from op_brains.config import (
     SCOPE,
