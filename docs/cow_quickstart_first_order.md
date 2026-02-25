@@ -1,34 +1,34 @@
-# Quickstart: do primeiro order em &lt;10 min (CoW Protocol)
+# Quickstart: First Order in <10 min (CoW Protocol)
 
-Guia mínimo para criar o primeiro order via Order Book API. Para dúvidas de parâmetro (slippage, buyAmount, approvals, erros), use o **chat desta PoC** ou a documentação oficial.
+Minimal guide to create your first order via the Order Book API. For parameter questions (slippage, buyAmount, approvals, errors), use this **PoC chat** or the official documentation.
 
-## Pré-requisitos
+## Prerequisites
 
-- Conta em rede suportada (ex.: [Sepolia](https://docs.cow.fi/cow-protocol/reference/smart-contracts/contract-addresses#sepolia)).
-- Wallet com ETH para gas e token que pretende vender.
-- Aprovação do token de venda para o [GPv2VaultRelayer](https://docs.cow.fi/cow-protocol/reference/smart-contracts/contract-addresses) (ver doc de [token approval](https://docs.cow.fi/cow-protocol/reference/smart-contracts/allowance)).
+- Account on a supported network (e.g. [Sepolia](https://docs.cow.fi/cow-protocol/reference/smart-contracts/contract-addresses#sepolia)).
+- Wallet with ETH for gas and the token you want to sell.
+- Approval of the sell token for the [GPv2VaultRelayer](https://docs.cow.fi/cow-protocol/reference/smart-contracts/contract-addresses) (see [token approval](https://docs.cow.fi/cow-protocol/reference/smart-contracts/allowance) doc).
 
-## Passos resumidos
+## Steps summary
 
-1. **Obter um quote**  
-   Chamar o endpoint de quote (ex.: `GET /api/v1/quote`) com `sellToken`, `buyToken`, `sellAmount` ou `buyAmount`, e `validTo`. Ver [Order Book API – Quote](https://docs.cow.fi/cow-protocol/reference/apis/orderbook#quote).
+1. **Get a quote**  
+   Call the quote endpoint (e.g. `GET /api/v1/quote`) with `sellToken`, `buyToken`, `sellAmount` or `buyAmount`, and `validTo`. See [Order Book API – Quote](https://docs.cow.fi/cow-protocol/reference/apis/orderbook#quote).
 
-2. **Montar e assinar o order**  
-   Usar o payload do quote (ou montar manualmente) com todos os campos obrigatórios (`sellToken`, `buyToken`, `sellAmount`, `buyAmount`, `validTo`, `appData`, etc.) e assinar com EIP-712. Ver [Order creation](https://docs.cow.fi/cow-protocol/reference/apis/orderbook#order-creation).
+2. **Build and sign the order**  
+   Use the quote payload (or build manually) with all required fields (`sellToken`, `buyToken`, `sellAmount`, `buyAmount`, `validTo`, `appData`, etc.) and sign with EIP-712. See [Order creation](https://docs.cow.fi/cow-protocol/reference/apis/orderbook#order-creation).
 
-3. **Submeter o order**  
-   `POST /api/v1/orders` com o body do order assinado. Base URLs: [mainnet](https://api.cow.fi) / [Sepolia](https://api.cow.fi) (ver [API base URLs](https://docs.cow.fi/cow-protocol/reference/apis/orderbook)).
+3. **Submit the order**  
+   `POST /api/v1/orders` with the signed order body. Base URLs: [mainnet](https://api.cow.fi) / [Sepolia](https://api.cow.fi) (see [API base URLs](https://docs.cow.fi/cow-protocol/reference/apis/orderbook)).
 
-4. **Acompanhar**  
-   Usar o `orderUid` devolvido para consultar o status (endpoint de order status na API).
+4. **Track**  
+   Use the returned `orderUid` to check status (order status endpoint on the API).
 
-## Links úteis
+## Useful links
 
 - [Order Book API (docs.cow.fi)](https://docs.cow.fi/cow-protocol/reference/apis/orderbook)
-- [Contract addresses (por rede)](https://docs.cow.fi/cow-protocol/reference/smart-contracts/contract-addresses)
+- [Contract addresses (by network)](https://docs.cow.fi/cow-protocol/reference/smart-contracts/contract-addresses)
 - [Token approval](https://docs.cow.fi/cow-protocol/reference/smart-contracts/allowance)
-- Chat desta PoC: use o frontend com `NEXT_PUBLIC_BRAND=cow` para perguntas sobre parâmetros, slippage, approvals e erros.
+- This PoC chat: use the frontend with `NEXT_PUBLIC_BRAND=cow` for questions on parameters, slippage, approvals and errors.
 
 ---
 
-*Script de exemplo (ex.: Node/TS ou Python) que cria um order na Sepolia pode ser adicionado como extensão futura.*
+*An example script (e.g. Node/TS or Python) that creates an order on Sepolia may be added as a future extension.*

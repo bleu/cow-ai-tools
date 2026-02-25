@@ -1,53 +1,53 @@
 # CoW Protocol Integration Documentation – PoC Plan
 
-Plano para a PoC do **CoW Protocol Integration Documentation** (RFP: [forum.cow.fi/t/cow-protocol-integration-documentation/3360](https://forum.cow.fi/t/cow-protocol-integration-documentation/3360)), usando como base o repositório forkado do **op-ai-tools** (Optimism) e as referências OP Chat, CoW Docs e RFP.
+Plan for the **CoW Protocol Integration Documentation** PoC (RFP: [forum.cow.fi/t/cow-protocol-integration-documentation/3360](https://forum.cow.fi/t/cow-protocol-integration-documentation/3360)), using the forked **op-ai-tools** (Optimism) repo and OP Chat, CoW Docs and RFP as references.
 
 ---
 
-## 1. Alinhamento com a RFP
+## 1. Alignment with the RFP
 
-### 1.1 Objetivo da RFP
+### 1.1 RFP objective
 
-- Reduzir atrito para **integradores** (parceiros, devs).
-- Foco em **clareza em nível de parâmetro**, não em conceitos gerais.
-- Entregar valor em: **Order creation** (slippage, formatos de amount), **Approval setup** (ABI, relay), **Error responses**, **Endpoint selection** (fast vs optimal quoting).
+- Reduce friction for **integrators** (partners, developers).
+- Focus on **parameter-level clarity**, not general concepts.
+- Deliver value in: **Order creation** (slippage, amount formats), **Approval setup** (ABI, relay), **Error responses**, **Endpoint selection** (fast vs optimal quoting).
 
-### 1.2 Track escolhido: **Track A (Systematic/AI-Based)**
+### 1.2 Chosen track: **Track A (Systematic/AI-Based)**
 
-- Solução **RAG** que usa documentação e spec existentes.
-- Camada que melhora conforme a documentação subjacente melhora.
-- PoC demonstra: sistema implantado + respostas precisas nas áreas prioritárias.
+- **RAG** solution that uses existing documentation and spec.
+- Layer that improves as the underlying documentation improves.
+- PoC demonstrates: deployed system + accurate responses in priority areas.
 
-### 1.3 Escopo In e Out (conforme RFP)
+### 1.3 In and out of scope (per RFP)
 
-| Dentro do escopo | Fora do escopo |
-|------------------|----------------|
-| Order Book API, quoting, order creation, approvals, erros, quickstart integração | Solver docs, CoW AMM, MEV Blocker, migração de plataforma, guias conceituais para end-users |
-
----
-
-## 2. Referências utilizadas
-
-| Recurso | Uso |
-|--------|-----|
-| **OP Chat** ([op-chat.bleu.builders/chat](https://op-chat.bleu.builders/chat)) | Referência de UX e fluxo do chat. |
-| **op-ai-tools** ([github.com/bleu/op-ai-tools](https://github.com/bleu/op-ai-tools)) | Base técnica: RAG, ingestão, API, frontend. |
-| **CoW Docs** ([docs.cow.fi](https://docs.cow.fi/)) | Conteúdo público a ser indexado. |
-| **cowprotocol/docs** ([github.com/cowprotocol/docs](https://github.com/cowprotocol/docs)) | Fonte primária: markdown (Docusaurus, pasta `docs/`). |
-| **Order Book API** | [docs.cow.fi – Order book API](https://docs.cow.fi/cow-protocol/reference/apis/orderbook); OpenAPI em [api.cow.fi/docs](https://api.cow.fi/docs) quando disponível. |
+| In scope | Out of scope |
+|----------|--------------|
+| Order Book API, quoting, order creation, approvals, errors, integration quickstart | Solver docs, CoW AMM, MEV Blocker, platform migration, conceptual guides for end-users |
 
 ---
 
-## 3. Arquitetura base (herdada do OP)
+## 2. References used
 
-### 3.1 Backend simplificado para PoC
+| Resource | Use |
+|----------|-----|
+| **OP Chat** ([op-chat.bleu.builders/chat](https://op-chat.bleu.builders/chat)) | UX and chat flow reference. |
+| **op-ai-tools** ([github.com/bleu/op-ai-tools](https://github.com/bleu/op-ai-tools)) | Technical base: RAG, ingestion, API, frontend. |
+| **CoW Docs** ([docs.cow.fi](https://docs.cow.fi/)) | Public content to be indexed. |
+| **cowprotocol/docs** ([github.com/cowprotocol/docs](https://github.com/cowprotocol/docs)) | Primary source: markdown (Docusaurus, `docs/` folder). |
+| **Order Book API** | [docs.cow.fi – Order book API](https://docs.cow.fi/cow-protocol/reference/apis/orderbook); OpenAPI at [api.cow.fi/docs](https://api.cow.fi/docs) when available. |
 
-Para a PoC o backend foi reduzido ao mínimo:
+---
 
-- **Mantido:** Quart, CORS, rota `GET /up` (health), rota `POST /predict` (question + memory → RAG).
-- **Removido:** Tortoise/DB, PostHog, Honeybadger, Quart-Tasks (cron), rate limiter, sync de forum/snapshot, eventos de analytics no predict.
+## 3. Base architecture (inherited from OP)
 
-O app (`pkg/op-app`) passa a depender só do necessário para servir o chat; `op-core` e `op-data` continuam como dependências transitivas do `op-brains` até a migração para fontes só de arquivo (CoW docs + FAISS local). Quando houver `cow-brains` com docs + OpenAPI em arquivo e FAISS local, será possível remover também `op-data` e `op-core` do stack.
+### 3.1 Backend simplified for PoC
+
+For the PoC the backend was reduced to the minimum:
+
+- **Kept:** Quart, CORS, `GET /up` (health), `POST /predict` (question + memory → RAG).
+- **Removed:** Tortoise/DB, PostHog, Honeybadger, Quart-Tasks (cron), rate limiter, forum/snapshot sync, analytics events in predict.
+
+The app (`pkg/op-app`) now depends only on what is needed to serve the chat; `op-core` and `op-data` remain as transitive dependencies of `op-brains` until migration to file-only sources (CoW docs + local FAISS). Once there is `cow-brains` with docs + OpenAPI in file and local FAISS, `op-data` and `op-core` can also be removed from the stack.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -57,160 +57,160 @@ O app (`pkg/op-app`) passa a depender só do necessário para servir o chat; `op
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Backend (Quart) – pkg/op-app (simplificado)                      │
+│  Backend (Quart) – pkg/op-app (simplified)                       │
 │  GET /up | POST /predict { question, memory } → RAG → { data, error }│
 └─────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │  RAG (pkg/op-brains → cow-brains)                                 │
-│  • Retriever: FAISS + índices (keywords/questions)                │
-│  • Expander: query → perguntas/keywords                            │
-│  • LLM: resposta com contexto recuperado                           │
+│  • Retriever: FAISS + indices (keywords/questions)               │
+│  • Expander: query → questions/keywords                          │
+│  • LLM: response with retrieved context                           │
 └─────────────────────────────────────────────────────────────────┘
                                     │
         ┌───────────────────────────┼───────────────────────────┐
         ▼                           ▼                           ▼
 ┌───────────────┐         ┌─────────────────┐         ┌─────────────────┐
-│ Docs (MD)     │         │ OpenAPI Order   │         │ (Opcional)       │
-│ cowprotocol/  │         │ Book – endpoints│         │ Erros / ref     │
-│ docs          │         │ schemas, params │         │ extra            │
+│ Docs (MD)     │         │ OpenAPI Order   │         │ (Optional)       │
+│ cowprotocol/  │         │ Book – endpoints │         │ Errors / extra   │
+│ docs          │         │ schemas, params │         │ ref               │
 └───────────────┘         └─────────────────┘         └─────────────────┘
 ```
 
-- **Fonte 1 – Documentação:** Markdown do repositório `cowprotocol/docs` (estrutura Docusaurus, pasta `docs/`), chunked por seção (headers), com `metadata.url` apontando para `https://docs.cow.fi/...`.
-- **Fonte 2 – API:** Order Book OpenAPI (endpoints, parâmetros, schemas, erros) parseado e chunked por endpoint/schema/erro para retrieval em nível de parâmetro (como no exemplo da aplicação do Mig no fórum).
-- **PoC:** Podemos começar só com docs markdown; OpenAPI na fase 2 para máxima precisão em “slippage”, “buyAmount”, “approval”, etc.
+- **Source 1 – Documentation:** Markdown from the `cowprotocol/docs` repo (Docusaurus structure, `docs/` folder), chunked by section (headers), with `metadata.url` pointing to `https://docs.cow.fi/...`.
+- **Source 2 – API:** Order Book OpenAPI (endpoints, parameters, schemas, errors) parsed and chunked by endpoint/schema/error for parameter-level retrieval (as in the Mig application example on the forum).
+- **PoC:** We can start with markdown docs only; OpenAPI in phase 2 for maximum accuracy on “slippage”, “buyAmount”, “approval”, etc.
 
 ---
 
-## 4. Plano de implementação em fases
+## 4. Phased implementation plan
 
-### Fase 1: Fundação (repo + docs CoW)
+### Phase 1: Foundation (repo + CoW docs)
 
-**Objetivo:** Chat RAG respondendo com base apenas na documentação pública do CoW (Concepts, Tutorials, Technical Reference), sem forum/snapshot.
+**Objective:** RAG chat that answers based only on public CoW documentation (Concepts, Tutorials, Technical Reference), without forum/snapshot.
 
-| # | Tarefa | Detalhes |
-|---|--------|----------|
-| 1.1 | Renomear / duplicar pacotes | `op-brains` → `cow-brains` (ou manter nome e trocar apenas fontes e config). `op-app` → `cow-app`, `op-artifacts` → `cow-artifacts`. Ajustar imports e pyproject. |
-| 1.2 | Config CoW | Novo `config.py`: `SCOPE = "CoW Protocol / Order Book API / Integration"`, `DOCS_PATH` ou fonte remota para `cowprotocol/docs`. Remover ou desabilitar `RAW_FORUM_DB`, `FORUM_SUMMARY_DB`, `SNAPSHOT_DB` para PoC. |
-| 1.3 | Script de ingestão de docs | Novo script (ex.: `scripts/cow-1-create-docs-dataset`) que clona ou baixa `cowprotocol/docs` e gera um artefato no formato esperado pelo pipeline (ex.: formato `==> path <==` como em `governance_docs.txt`, ou CSV com `fullpath`, `content`). Filtro: apenas `docs/` relevantes para integração (Technical Reference, Tutorials de API/order creation; opcionalmente Concepts úteis). |
-| 1.4 | Estratégia de documentos CoW | Nova classe em `documents/` (ex.: `cow.py`): `CowDocsProcessingStrategy` inspirada em `FragmentsProcessingStrategy`. Leitura do artefato (txt ou CSV), split por headers Markdown, `metadata.url` = `https://docs.cow.fi/...` (mapear path do repo → URL da doc). |
-| 1.5 | Chat sources | Em `documents/__init__.py`, usar apenas a estratégia de docs CoW (sem forum/summary). Manter interface `DataExporter` e `chat_sources` para o retriever. |
-| 1.6 | Setup & índices | `setup.py`: gerar FAISS e índices (keywords/questions) a partir dos chunks de docs CoW. Ajustar prompts de geração de perguntas para escopo “CoW Protocol integration / Order Book API”. |
-| 1.7 | API e frontend | Backend: manter `/predict`; apontar para `cow-brains` (ou config “cow”). Frontend: trocar branding (Optimism → CoW), `NEXT_PUBLIC_CHAT_API_URL` para o backend do CoW. |
-| 1.8 | README e env | README do repo descrevendo PoC CoW, pré-requisitos, como rodar ingestão, setup e chat. `.envrc.example` com variáveis necessárias (embedding, LLM, API URL). |
+| # | Task | Details |
+|---|------|---------|
+| 1.1 | Rename / duplicate packages | `op-brains` → `cow-brains` (or keep name and only change sources and config). `op-app` → `cow-app`, `op-artifacts` → `cow-artifacts`. Adjust imports and pyproject. |
+| 1.2 | CoW config | New `config.py`: `SCOPE = "CoW Protocol / Order Book API / Integration"`, `DOCS_PATH` or remote source for `cowprotocol/docs`. Remove or disable `RAW_FORUM_DB`, `FORUM_SUMMARY_DB`, `SNAPSHOT_DB` for PoC. |
+| 1.3 | Docs ingestion script | New script (e.g. `scripts/cow-1-create-docs-dataset`) that clones or downloads `cowprotocol/docs` and produces an artifact in the format expected by the pipeline (e.g. `==> path <==` format as in `governance_docs.txt`, or CSV with `fullpath`, `content`). Filter: only `docs/` relevant for integration (Technical Reference, API/order creation Tutorials; optionally useful Concepts). |
+| 1.4 | CoW document strategy | New class in `documents/` (e.g. `cow.py`): `CowDocsProcessingStrategy` inspired by `FragmentsProcessingStrategy`. Read artifact (txt or CSV), split by Markdown headers, `metadata.url` = `https://docs.cow.fi/...` (map repo path → doc URL). |
+| 1.5 | Chat sources | In `documents/__init__.py`, use only the CoW docs strategy (no forum/summary). Keep `DataExporter` and `chat_sources` interface for the retriever. |
+| 1.6 | Setup & indices | `setup.py`: generate FAISS and indices (keywords/questions) from CoW docs chunks. Adjust question-generation prompts for scope “CoW Protocol integration / Order Book API”. |
+| 1.7 | API and frontend | Backend: keep `/predict`; point to `cow-brains` (or config “cow”). Frontend: change branding (Optimism → CoW), `NEXT_PUBLIC_CHAT_API_URL` to CoW backend. |
+| 1.8 | README and env | Repo README describing CoW PoC, prerequisites, how to run ingestion, setup and chat. `.envrc.example` with required variables (embedding, LLM, API URL). |
 
-**Entregável Fase 1:** Chat funcionando que responde sobre CoW Protocol com base apenas na documentação indexada (docs.cow.fi via repo).
-
----
-
-### Fase 2: Order Book API (OpenAPI) e precisão em parâmetros
-
-**Objetivo:** Respostas com precisão em nível de parâmetro (slippage, buyAmount, approvals, erros), alinhado às prioridades da RFP.
-
-| # | Tarefa | Detalhes |
-|---|--------|----------|
-| 2.1 | Obter OpenAPI Order Book | Localizar spec (api.cow.fi/docs ou repo cowprotocol/services) e salvar localmente (YAML/JSON). |
-| 2.2 | Parser OpenAPI | Módulo que lê o spec, resolve `$ref`/`allOf`, extrai endpoints, request/response schemas, enums, descrições e erros. Gera “chunks” por endpoint, por schema e por erro (como no exemplo Mig: api-endpoint, api-schema, api-error). |
-| 2.3 | Ingestão OpenAPI | Incluir esses chunks no pipeline de embedding e nos índices (keywords/questions). Metadata: tipo (endpoint/schema/error), path, method, nome do parâmetro, etc. |
-| 2.4 | Integrar no DataExporter | Segunda fonte em `chat_sources`: estratégia que retorna documentos gerados a partir do OpenAPI. Retriever passa a considerar docs + API. |
-| 2.5 | Prompt/system | ~~Ajustar system prompt do chat para priorizar respostas baseadas em “parameter-level” (Order creation, Approvals, Errors, Fast vs Optimal), citando endpoint e parâmetro quando aplicável.~~ **Feito:** `model_utils.py` – instruções CoW no responder e no Answer; preprocessor com termos CoW; `ContextHandling.format` para docs_fragment/api-endpoint. |
-| 2.6 | Quick prompts (opcional) | No frontend, sugerir perguntas rápidas: “How do I set buyAmount with slippage?”, “How do I set token approval for gasless swap?”, “When to use fast vs optimal quote?”, “What does error X mean?”. |
-
-**Entregável Fase 2:** Assistente que responde com precisão sobre campos da API (slippage, amounts, approvals) e erros, com citações à doc e ao spec.
+**Phase 1 deliverable:** Working chat that answers about CoW Protocol based only on indexed documentation (docs.cow.fi via repo).
 
 ---
 
-### Fase 3: Quickstart e validação (RFP)
+### Phase 2: Order Book API (OpenAPI) and parameter accuracy
 
-**Objetivo:** Demonstrar “quickstart que leva a um primeiro order em <10 min” e validação nas áreas prioritárias.
+**Objective:** Parameter-level accuracy (slippage, buyAmount, approvals, errors), aligned with RFP priorities.
 
-| # | Tarefa | Detalhes |
-|---|--------|----------|
-| 3.1 | Conjunto de “golden questions” | 20–30 perguntas cobrindo: order creation (slippage, formatos), approvals (ABI, relay), erros comuns, fast vs optimal. Respostas de referência (ou critérios de sucesso) para avaliação. |
-| 3.2 | Avaliação PoC | Rodar golden questions no chat; medir relevância e precisão (manual ou com checklist). Documentar resultados e gaps. **Feito:** `docs/cow_poc_evaluation.md` com instruções e template de resultados/gaps. |
-| 3.3 | Quickstart em texto/código | Guia mínimo (markdown ou página no repo): “Do primeiro order em <10 min” usando a API (e/ou SDK), com links para o chat para dúvidas de parâmetro. **Feito:** `docs/cow_quickstart_first_order.md`. Opcional: script exemplo (ex.: Sepolia) como extensão futura. |
-| 3.4 | Documentação do PoC | README atualizado, possível `docs/COW_POC_PLAN.md` (este doc), e se aplicável um sumário para submissão à RFP (o que foi feito, como testar, limites). |
+| # | Task | Details |
+|---|------|---------|
+| 2.1 | Get Order Book OpenAPI | Locate spec (api.cow.fi/docs or cowprotocol/services repo) and save locally (YAML/JSON). |
+| 2.2 | OpenAPI parser | Module that reads the spec, resolves `$ref`/`allOf`, extracts endpoints, request/response schemas, enums, descriptions and errors. Produces “chunks” per endpoint, per schema and per error (as in Mig example: api-endpoint, api-schema, api-error). |
+| 2.3 | OpenAPI ingestion | Include these chunks in the embedding pipeline and in indices (keywords/questions). Metadata: type (endpoint/schema/error), path, method, parameter name, etc. |
+| 2.4 | Integrate in DataExporter | Second source in `chat_sources`: strategy that returns documents generated from the OpenAPI. Retriever then considers docs + API. |
+| 2.5 | Prompt/system | ~~Adjust chat system prompt to prioritize “parameter-level” responses (Order creation, Approvals, Errors, Fast vs Optimal), citing endpoint and parameter when applicable.~~ **Done:** `model_utils.py` – CoW instructions in responder and Answer; preprocessor with CoW terms; `ContextHandling.format` for docs_fragment/api-endpoint. |
+| 2.6 | Quick prompts (optional) | On the frontend, suggest quick questions: “How do I set buyAmount with slippage?”, “How do I set token approval for gasless swap?”, “When to use fast vs optimal quote?”, “What does error X mean?”. |
 
-**Entregável Fase 3:** Evidência de que o assistente cobre as prioridades da RFP + quickstart documentado.
-
----
-
-## 5. Decisões técnicas resumidas
-
-| Aspecto | Decisão |
-|--------|--------|
-| **Fontes de dados** | 1) Markdown de cowprotocol/docs (filtrado por integração). 2) Order Book OpenAPI (endpoints, schemas, erros). |
-| **Vector store** | Manter FAISS no PoC (como no OP); migrar para pgvector/Neon só se for requisito de deploy. |
-| **Embedding** | Manter modelo configurável (ex.: OpenAI ada-002 ou text-embedding-3-small). |
-| **LLM** | Manter configurável (ex.: GPT-4o-mini / Claude). |
-| **Forum / Snapshot** | Não usar na PoC (fora do escopo da RFP de integração). |
-| **Naming** | Renomear para `cow-*` onde fizer sentido para clareza; ou manter `op-*` e identificar por config. |
+**Phase 2 deliverable:** Assistant that answers accurately about API fields (slippage, amounts, approvals) and errors, with citations to doc and spec.
 
 ---
 
-## 6. Riscos e dependências
+### Phase 3: Quickstart and validation (RFP)
 
-- **OpenAPI:** Se a spec do Order Book não estiver pública ou estável, a Fase 2 pode depender de acesso ou de export manual a partir de api.cow.fi/docs.
-- **Manutenção:** RFP menciona “Swagger/OpenAPI sync as a prerequisite”; a PoC pode assumir um snapshot da spec e documentar que updates exigem re-ingestão.
-- **Escopo da doc:** Focar apenas em paths do `docs/` relacionados a CoW Protocol (referência de APIs, tutorials de integração); excluir CoW AMM, MEV Blocker, etc., conforme RFP.
+**Objective:** Demonstrate “quickstart that leads to a first order in <10 min” and validation in priority areas.
 
----
+| # | Task | Details |
+|---|------|---------|
+| 3.1 | “Golden questions” set | 20–30 questions covering: order creation (slippage, formats), approvals (ABI, relay), common errors, fast vs optimal. Reference answers (or success criteria) for evaluation. |
+| 3.2 | PoC evaluation | Run golden questions in the chat; measure relevance and accuracy (manual or with checklist). Document results and gaps. **Done:** `docs/cow_poc_evaluation.md` with instructions and results/gaps template. |
+| 3.3 | Quickstart in text/code | Minimal guide (markdown or repo page): “First order in <10 min” using the API (and/or SDK), with links to the chat for parameter questions. **Done:** `docs/cow_quickstart_first_order.md`. Optional: example script (e.g. Sepolia) as future extension. |
+| 3.4 | PoC documentation | Updated README, optional `docs/COW_POC_PLAN.md` (this doc), and if applicable a summary for RFP submission (what was done, how to test, limitations). |
 
-## 7. Próximos passos imediatos
-
-1. **Confirmar** com o time: Track A apenas (RAG) ou híbrido com conteúdo manual (Track B) depois.
-2. **Implementar Fase 1:** config, script de clone/processamento de cowprotocol/docs, `CowDocsProcessingStrategy`, troca de fontes no DataExporter, setup + API + frontend com branding CoW.
-3. **Localizar** OpenAPI Order Book (URL ou arquivo) para preparar Fase 2.
-4. **Definir** 20–30 golden questions e critérios de aceite para a validação da RFP.
+**Phase 3 deliverable:** Evidence that the assistant covers RFP priorities + documented quickstart.
 
 ---
 
-## 8. Passos técnicos concretos (checklist)
+## 5. Technical decisions summary
 
-### 8.1 Repo e config
-
-- [x] Manter `op-brains`; usar flag `USE_COW` e config CoW no mesmo pacote.
-- [x] Em `op-brains`: `config.py` com `USE_COW`, `SCOPE`, `DOCS_PATH`/`COW_DOCS_PATH`, `COW_FAISS_PATH`; sem DB para CoW.
-- [x] `documents/cow.py`: `CowDocsProcessingStrategy` (ler artefato, split por headers, `metadata.url` = `https://docs.cow.fi/...`).
-- [x] `documents/__init__.py`: quando `USE_COW`, `chat_sources = [[CowDocsProcessingStrategy]]`.
-- [x] Ajustar `setup.py` para escopo CoW (TYPE_GUIDELINES, import condicional de op_data).
-
-### 8.2 Ingestão CoW Docs
-
-- [x] Script `scripts/cow-1-create-docs-dataset/main.py`: clone cowprotocol/docs, percorrer `docs/cow-protocol/**/*.md` e `docs/README.md`, gerar `==> path <==\n{content}` em `data/cow-docs/cow_docs.txt` (opção `--no-pull`).
-- [x] Em `cow.py`: mapear path para URL `https://docs.cow.fi/...` (sem `.md`).
-- [x] Config: `USE_COW` + `COW_DOCS_PATH`; `CowDocsProcessingStrategy` usa `DOCS_PATH`.
-
-### 8.3 OpenAPI (Fase 2)
-
-- [x] **URL do OpenAPI:** `https://raw.githubusercontent.com/cowprotocol/services/main/crates/orderbook/openapi.yml` (referenciado em docs/reference/apis/orderbook.mdx).
-- [x] Script `scripts/cow-2-fetch-openapi/main.py` para baixar o spec em `data/cow-docs/openapi.yml`.
-- [x] Módulo `op_brains/documents/openapi_orderbook.py`: parse do spec (YAML), geração de chunks por endpoint e por schema; metadata `api-endpoint` / `api-schema`, URL para docs.cow.fi.
-- [x] Quando `USE_COW` e `COW_OPENAPI_PATH` aponta para ficheiro existente, `OpenApiOrderbookStrategy` é a segunda fonte em `chat_sources`. Rebuild do FAISS para incluir chunks OpenAPI.
-
-### 8.4 Backend e frontend
-
-- [x] **Backend PoC:** API já simplificada: só Quart + CORS + `/up` + `/predict` (sem DB, analytics, cron). Ver `pkg/op-app/op_app/api.py`.
-- [x] Backend CoW: op-app com `USE_COW=true` chama `process_question` do op-brains e usa FAISS/índices CoW (docs + OpenAPI).
-- [x] **System prompt (2.5):** Em `model_utils.py`, instruções CoW no responder (parameter-level, citar endpoint/URL) e no Answer; preprocessor com termos CoW; `ContextHandling.format` inclui `docs_fragment` e `api-endpoint`/`api-schema` no contexto.
-- [x] Frontend: branding CoW via `NEXT_PUBLIC_BRAND=cow` (header “CoW Protocol”, empty state, quick prompts: buyAmount/slippage, approval gasless, fast vs optimal, erros). `.envrc.example`: `NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000/predict`.
-
-### 8.5 Deploy e validação
-
-- [x] README com instruções: ingestão → (opcional) fetch OpenAPI → build FAISS → rodar API → rodar www; golden questions referenciadas.
-- [x] Golden questions em `docs/cow_golden_questions.md` (24 perguntas nas áreas: order creation, approvals, quoting, errors, endpoints).
-- [x] Avaliação PoC (3.2): `docs/cow_poc_evaluation.md` com instruções para rodar golden questions e template de resultados/gaps.
-- [x] Quickstart (3.3): `docs/cow_quickstart_first_order.md` – guia “do primeiro order em <10 min” com links para API e chat.
-
-### 8.6 Quickstart (“primeiro order em &lt;10 min”)
-
-- [x] Fluxo documentado no README (CoW PoC): criar artefato docs → (opcional) fetch OpenAPI → build FAISS → rodar API → rodar www com `NEXT_PUBLIC_BRAND=cow`. O chat serve como suporte para dúvidas de parâmetro; guia “do primeiro order” em código fica como extensão futura (ex.: script Sepolia).
+| Aspect | Decision |
+|--------|----------|
+| **Data sources** | 1) Markdown from cowprotocol/docs (filtered for integration). 2) Order Book OpenAPI (endpoints, schemas, errors). |
+| **Vector store** | Keep FAISS in PoC (as in OP); migrate to pgvector/Neon only if required for deploy. |
+| **Embedding** | Keep model configurable (e.g. OpenAI ada-002 or text-embedding-3-small). |
+| **LLM** | Keep configurable (e.g. GPT-4o-mini / Claude). |
+| **Forum / Snapshot** | Not used in PoC (out of RFP integration scope). |
+| **Naming** | Rename to `cow-*` where it adds clarity; or keep `op-*` and identify by config. |
 
 ---
 
-## 9. Referências rápidas
+## 6. Risks and dependencies
+
+- **OpenAPI:** If the Order Book spec is not public or stable, Phase 2 may depend on access or manual export from api.cow.fi/docs.
+- **Maintenance:** RFP mentions “Swagger/OpenAPI sync as a prerequisite”; the PoC can assume a spec snapshot and document that updates require re-ingestion.
+- **Doc scope:** Focus only on `docs/` paths related to CoW Protocol (API reference, integration tutorials); exclude CoW AMM, MEV Blocker, etc., per RFP.
+
+---
+
+## 7. Immediate next steps
+
+1. **Confirm** with the team: Track A only (RAG) or hybrid with manual content (Track B) later.
+2. **Implement Phase 1:** config, clone/processing script for cowprotocol/docs, `CowDocsProcessingStrategy`, source swap in DataExporter, setup + API + frontend with CoW branding.
+3. **Locate** Order Book OpenAPI (URL or file) to prepare Phase 2.
+4. **Define** 20–30 golden questions and acceptance criteria for RFP validation.
+
+---
+
+## 8. Concrete technical steps (checklist)
+
+### 8.1 Repo and config
+
+- [x] Keep `op-brains`; use `USE_COW` flag and CoW config in the same package.
+- [x] In `op-brains`: `config.py` with `USE_COW`, `SCOPE`, `DOCS_PATH`/`COW_DOCS_PATH`, `COW_FAISS_PATH`; no DB for CoW.
+- [x] `documents/cow.py`: `CowDocsProcessingStrategy` (read artifact, split by headers, `metadata.url` = `https://docs.cow.fi/...`).
+- [x] `documents/__init__.py`: when `USE_COW`, `chat_sources = [[CowDocsProcessingStrategy]]`.
+- [x] Adjust `setup.py` for CoW scope (TYPE_GUIDELINES, conditional import of op_data).
+
+### 8.2 CoW docs ingestion
+
+- [x] Script `scripts/cow-1-create-docs-dataset/main.py`: clone cowprotocol/docs, walk `docs/cow-protocol/**/*.md` and `docs/README.md`, produce `==> path <==\n{content}` in `data/cow-docs/cow_docs.txt` (option `--no-pull`).
+- [x] In `cow.py`: map path to URL `https://docs.cow.fi/...` (without `.md`).
+- [x] Config: `USE_COW` + `COW_DOCS_PATH`; `CowDocsProcessingStrategy` uses `DOCS_PATH`.
+
+### 8.3 OpenAPI (Phase 2)
+
+- [x] **OpenAPI URL:** `https://raw.githubusercontent.com/cowprotocol/services/main/crates/orderbook/openapi.yml` (referenced in docs/reference/apis/orderbook.mdx).
+- [x] Script `scripts/cow-2-fetch-openapi/main.py` to download the spec to `data/cow-docs/openapi.yml`.
+- [x] Module `op_brains/documents/openapi_orderbook.py`: parse spec (YAML), generate chunks per endpoint and per schema; metadata `api-endpoint` / `api-schema`, URL to docs.cow.fi.
+- [x] When `USE_COW` and `COW_OPENAPI_PATH` points to an existing file, `OpenApiOrderbookStrategy` is the second source in `chat_sources`. Rebuild FAISS to include OpenAPI chunks.
+
+### 8.4 Backend and frontend
+
+- [x] **PoC backend:** API already simplified: Quart + CORS + `/up` + `/predict` only (no DB, analytics, cron). See `pkg/op-app/op_app/api.py`.
+- [x] CoW backend: op-app with `USE_COW=true` calls `process_question` from op-brains and uses CoW FAISS/indices (docs + OpenAPI).
+- [x] **System prompt (2.5):** In `model_utils.py`, CoW instructions in responder (parameter-level, cite endpoint/URL) and in Answer; preprocessor with CoW terms; `ContextHandling.format` includes `docs_fragment` and `api-endpoint`/`api-schema` in context.
+- [x] Frontend: CoW branding via `NEXT_PUBLIC_BRAND=cow` (header “CoW Protocol”, empty state, quick prompts: buyAmount/slippage, gasless approval, fast vs optimal, errors). `.envrc.example`: `NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000/predict`.
+
+### 8.5 Deploy and validation
+
+- [x] README with instructions: ingestion → (optional) fetch OpenAPI → build FAISS → run API → run www; golden questions referenced.
+- [x] Golden questions in `docs/cow_golden_questions.md` (24 questions in areas: order creation, approvals, quoting, errors, endpoints).
+- [x] PoC evaluation (3.2): `docs/cow_poc_evaluation.md` with instructions to run golden questions and results/gaps template.
+- [x] Quickstart (3.3): `docs/cow_quickstart_first_order.md` – “first order in <10 min” guide with links to API and chat.
+
+### 8.6 Quickstart (“first order in <10 min”)
+
+- [x] Flow documented in README (CoW PoC): create docs artifact → (optional) fetch OpenAPI → build FAISS → run API → run www with `NEXT_PUBLIC_BRAND=cow`. The chat serves as support for parameter questions; “first order” code guide remains as a future extension (e.g. Sepolia script).
+
+---
+
+## 9. Quick references
 
 - RFP: https://forum.cow.fi/t/cow-protocol-integration-documentation/3360  
 - CoW Docs: https://docs.cow.fi/  

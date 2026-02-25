@@ -1,129 +1,129 @@
-# Como funciona o CoW AI – do setup das docs até a resposta no chat
+# How CoW AI Works – From Doc Setup to Chat Response
 
-Fluxo completo: preparação dos dados → índice vetorial → API → RAG → frontend.
+End-to-end flow: data preparation → vector index → API → RAG → frontend.
 
 ---
 
-## 1. Setup das documentações (uma vez)
+## 1. Documentation setup (once)
 
-### 1.1 Artefato de docs (Markdown)
+### 1.1 Docs artifact (Markdown)
 
 - **Script:** `scripts/cow-1-create-docs-dataset/main.py`
-- **O que faz:** Clona o repositório [cowprotocol/docs](https://github.com/cowprotocol/docs), percorre a pasta `docs/cow-protocol/` (e `docs/README.md`) e gera um único arquivo de texto no formato:
+- **What it does:** Clones the [cowprotocol/docs](https://github.com/cowprotocol/docs) repo, walks the `docs/cow-protocol/` folder (and `docs/README.md`) and produces a single text file in the format:
   ```
   ==> docs/cow-protocol/concepts/order-types/market-orders.md <==
-  (conteúdo do arquivo)
+  (file content)
   ```
-- **Saída:** `data/cow-docs/cow_docs.txt` (ou caminho passado em `--output`).
-- **Comando:** `python scripts/cow-1-create-docs-dataset/main.py --output data/cow-docs/cow_docs.txt`
+- **Output:** `data/cow-docs/cow_docs.txt` (or path given in `--output`).
+- **Command:** `python scripts/cow-1-create-docs-dataset/main.py --output data/cow-docs/cow_docs.txt`
 
-### 1.2 OpenAPI do Order Book (opcional)
+### 1.2 Order Book OpenAPI (optional)
 
 - **Script:** `scripts/cow-2-fetch-openapi/main.py`
-- **O que faz:** Baixa o spec OpenAPI da Order Book API e salva em YAML.
-- **Saída:** `data/cow-docs/openapi.yml`.
-- **Uso:** Incluído como fonte no RAG para respostas em nível de parâmetro (endpoints, campos, erros).
+- **What it does:** Fetches the Order Book API OpenAPI spec and saves it as YAML.
+- **Output:** `data/cow-docs/openapi.yml`.
+- **Use:** Included as a source in RAG for parameter-level answers (endpoints, fields, errors).
 
-### 1.3 Variáveis de ambiente
+### 1.3 Environment variables
 
-- **Base:** `OP_CHAT_BASE_PATH` aponta para a pasta onde estão `cow-docs/` (ex.: `../../data` ou caminho absoluto).
-- **Arquivos:** Dentro de `cow-docs/` esperamos:
-  - `cow_docs.txt` (artefato do passo 1.1)
-  - `openapi.yml` (opcional, passo 1.2)
-  - `faiss/` (criada no passo 2).
+- **Base:** `OP_CHAT_BASE_PATH` points to the folder containing `cow-docs/` (e.g. `../../data` or an absolute path).
+- **Files:** Inside `cow-docs/` we expect:
+  - `cow_docs.txt` (artifact from step 1.1)
+  - `openapi.yml` (optional, step 1.2)
+  - `faiss/` (created in step 2).
 
 ---
 
-## 2. Construção do índice FAISS (uma vez, ou ao atualizar docs)
+## 2. Building the FAISS index (once, or when updating docs)
 
-- **Módulo:** `cow_brains.build_faiss`  
-- **Comando:** `cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=... GOOGLE_API_KEY=... poetry run python -m cow_brains.build_faiss`
+- **Module:** `cow_brains.build_faiss`  
+- **Command:** `cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=... GOOGLE_API_KEY=... poetry run python -m cow_brains.build_faiss`
 
-**Passo a passo interno:**
+**Internal steps:**
 
-1. **Carregar documentos**
-   - `DataExporter.get_dataframe()` chama as estratégias de documento:
-     - **CowDocsProcessingStrategy** (`documents_cow.py`): lê `cow_docs.txt`, quebra por `==> path <==`, divide cada doc por headers Markdown (##, ###, …) e gera fragmentos com metadados (URL em `https://docs.cow.fi/...`).
-     - **OpenApiOrderbookStrategy** (`openapi_orderbook.py`): lê `openapi.yml`, gera um fragmento por endpoint e por schema, com URL fixa da Order Book API.
-   - O DataFrame resultante tem colunas: `url`, `last_date`, `content` (objetos `Document` do LangChain), `type_db_info`.
+1. **Load documents**
+   - `DataExporter.get_dataframe()` calls document strategies:
+     - **CowDocsProcessingStrategy** (`documents_cow.py`): reads `cow_docs.txt`, splits by `==> path <==`, splits each doc by Markdown headers (##, ###, …) and produces fragments with metadata (URL in `https://docs.cow.fi/...`).
+     - **OpenApiOrderbookStrategy** (`openapi_orderbook.py`): reads `openapi.yml`, produces one fragment per endpoint and per schema, with fixed Order Book API URL.
+   - The resulting DataFrame has columns: `url`, `last_date`, `content` (LangChain `Document` objects), `type_db_info`.
 
 2. **Embeddings**
-   - Usa o modelo de embeddings configurado (ex.: `gemini-embedding-001`) via `access_APIs.get_embedding(EMBEDDING_MODEL)` (Gemini, com `GOOGLE_API_KEY`).
+   - Uses the configured embedding model (e.g. `gemini-embedding-001`) via `access_APIs.get_embedding(EMBEDDING_MODEL)` (Gemini, with `GOOGLE_API_KEY`).
 
 3. **FAISS**
-   - `FAISS.from_documents(documents, embeddings)` monta o índice vetorial.
-   - `db.save_local(COW_FAISS_PATH)` grava em `data/cow-docs/faiss/` (arquivos `index.faiss` e `index.pkl`).
+   - `FAISS.from_documents(documents, embeddings)` builds the vector index.
+   - `db.save_local(COW_FAISS_PATH)` writes to `data/cow-docs/faiss/` (files `index.faiss` and `index.pkl`).
 
-Assim, as “docs” que o chat usa são: fragmentos dos Markdown do CoW + chunks do OpenAPI, todos indexados por vetor no FAISS.
+So the “docs” the chat uses are: fragments from CoW Markdown + OpenAPI chunks, all indexed by vector in FAISS.
 
 ---
 
-## 3. Subida da API (backend)
+## 3. API startup (backend)
 
 - **App:** `pkg/op-app/op_app/api.py` (Quart).
-- **Ativação CoW:** `PROJECT=cow` (ou `USE_COW=true`) e, se quiser, `OP_CHAT_BASE_PATH` no `.env` ou no ambiente.
-- **Início:** Carrega `.env` de `pkg/op-app` (ex.: `GOOGLE_API_KEY`), depois importa `cow_brains.process_question` quando o projeto é CoW.
-- **Rotas:**
+- **CoW activation:** `PROJECT=cow` (or `USE_COW=true`) and, if you want, `OP_CHAT_BASE_PATH` in `.env` or in the environment.
+- **Startup:** Loads `.env` from `pkg/op-app` (e.g. `GOOGLE_API_KEY`), then imports `cow_brains.process_question` when the project is CoW.
+- **Routes:**
   - `GET /up` → health check.
-  - `POST /predict` → corpo `{ "question": "...", "memory": [ { "name": "user"|"chat", "message": "..." } ] }` → resposta `{ "data": { "answer": "...", "url_supporting": ["..."] }, "error": null }`.
+  - `POST /predict` → body `{ "question": "...", "memory": [ { "name": "user"|"chat", "message": "..." } ] }` → response `{ "data": { "answer": "...", "url_supporting": ["..."] }, "error": null }`.
 
 ---
 
-## 4. Quando o usuário envia uma pergunta no chat
+## 4. When the user sends a question in the chat
 
 ### 4.1 Frontend
 
-- O usuário digita no campo e envia.
-- O frontend (Next.js) chama `POST NEXT_PUBLIC_CHAT_API_URL` (ex.: `http://localhost:8000/predict`) com `{ question, memory }`.
-- Ao receber a resposta, preenche a bolha da assistente com `data.answer` e as referências `data.url_supporting`.
+- The user types in the field and submits.
+- The frontend (Next.js) calls `POST NEXT_PUBLIC_CHAT_API_URL` (e.g. `http://localhost:8000/predict`) with `{ question, memory }`.
+- On response, it fills the assistant bubble with `data.answer` and references `data.url_supporting`.
 
 ### 4.2 Backend: `process_question` (cow_brains)
 
-1. **Checagem do índice**
-   - Se `COW_FAISS_PATH` não for um diretório existente, devolve mensagem pedindo para rodar `python -m cow_brains.build_faiss`.
+1. **Index check**
+   - If `COW_FAISS_PATH` is not an existing directory, returns a message asking to run `python -m cow_brains.build_faiss`.
 
-2. **DataFrame de contexto**
-   - `DataExporter.get_dataframe()` devolve o mesmo tipo de DataFrame usado no build (docs + OpenAPI), em cache. Será usado para filtrar/mapear contexto por URL.
+2. **Context DataFrame**
+   - `DataExporter.get_dataframe()` returns the same type of DataFrame used in the build (docs + OpenAPI), cached. Used to filter/map context by URL.
 
 3. **Retriever**
-   - `RetrieverBuilder.build_faiss_retriever(faiss_path=COW_FAISS_PATH, embedding_model=EMBEDDING_MODEL, k=5)` carrega o FAISS salvo e expõe uma função que, dada uma string (pergunta ou expansão), retorna os `k` documentos mais similares.
+   - `RetrieverBuilder.build_faiss_retriever(faiss_path=COW_FAISS_PATH, embedding_model=EMBEDDING_MODEL, k=5)` loads the saved FAISS and exposes a function that, given a string (question or expansion), returns the `k` most similar documents.
 
 4. **RAG (op_brains.RAGSystem)**
-   - **Preprocessador (LLM 1 – Gemini):** Recebe a pergunta e o histórico. Decide se já dá para responder só com o histórico (`needs_info=False`) ou se precisa buscar mais contexto (`needs_info=True`). No segundo caso, devolve perguntas e palavras-chave para busca.
-   - **Busca:** O retriever é chamado com essas perguntas/palavras-chave; o FAISS devolve os fragmentos mais próximos no espaço de embeddings.
-   - **Filtro de contexto:** Os fragmentos são formatados em texto (com URLs no contexto) e passados ao respondente.
-   - **Respondente (LLM 2 – Gemini):** Recebe a pergunta, o contexto formatado e as instruções CoW (responder em nível de parâmetro, citar URLs, não inventar endpoints). Devolve `answer` (texto) e `url_supporting` (lista de URLs citadas).
-   - O sistema pode fazer mais de uma rodada de “expandir pergunta → buscar → responder” até achar resposta suficiente ou atingir o limite.
+   - **Preprocessor (LLM 1 – Gemini):** Receives the question and history. Decides whether it can answer from history alone (`needs_info=False`) or needs more context (`needs_info=True`). In the second case, returns questions and keywords for retrieval.
+   - **Retrieval:** The retriever is called with those questions/keywords; FAISS returns the closest fragments in embedding space.
+   - **Context filter:** Fragments are formatted as text (with URLs in context) and passed to the responder.
+   - **Responder (LLM 2 – Gemini):** Receives the question, formatted context, and CoW instructions (answer at parameter level, cite URLs, do not invent endpoints). Returns `answer` (text) and `url_supporting` (list of cited URLs).
+   - The system may do multiple rounds of “expand question → retrieve → respond” until it has a sufficient answer or hits the limit.
 
-5. **Resposta final**
-   - `process_question` devolve `{ "data": { "answer": "...", "url_supporting": ["https://docs.cow.fi/...", ...] }, "error": null }`. Em erro, preenche `data.answer` com a mensagem de erro e opcionalmente `error`.
+5. **Final response**
+   - `process_question` returns `{ "data": { "answer": "...", "url_supporting": ["https://docs.cow.fi/...", ...] }, "error": null }`. On error, fills `data.answer` with the error message and optionally `error`.
 
-### 4.3 Frontend de novo
+### 4.3 Frontend again
 
-- Recebe o JSON e atualiza o estado do chat com `data.answer` e `data.url_supporting`.
-- `formatAnswerWithReferences` monta o texto da resposta e os links [1], [2], … a partir de `url_supporting`, normalizando URLs `docs.cow.fi` (lowercase, etc.) para evitar 404.
-- O componente de mensagem renderiza o texto e as referências clicáveis (Markdown + links).
-
----
-
-## 5. Resumo em uma frase
-
-**Setup:** Scripts geram `cow_docs.txt` e (opcional) `openapi.yml` → **Build:** `cow_brains.build_faiss` gera o FAISS a partir dessas fontes com embeddings Gemini → **API:** Com `PROJECT=cow`, o `/predict` usa esse FAISS e o pipeline RAG do op_brains (preprocessador + retriever + respondente Gemini) para produzir `answer` e `url_supporting` → **Frontend:** Exibe a resposta e as referências como links para docs.cow.fi e Order Book API.
+- Receives the JSON and updates chat state with `data.answer` and `data.url_supporting`.
+- `formatAnswerWithReferences` builds the response text and links [1], [2], … from `url_supporting`, normalizing `docs.cow.fi` URLs (lowercase, etc.) to avoid 404s.
+- The message component renders the text and clickable references (Markdown + links).
 
 ---
 
-## Referência rápida de arquivos
+## 5. One-sentence summary
 
-| Etapa              | Onde está |
-|--------------------|-----------|
-| Criar artefato docs | `scripts/cow-1-create-docs-dataset/main.py` |
+**Setup:** Scripts produce `cow_docs.txt` and (optional) `openapi.yml` → **Build:** `cow_brains.build_faiss` builds the FAISS from these sources with Gemini embeddings → **API:** With `PROJECT=cow`, `/predict` uses that FAISS and the op_brains RAG pipeline (preprocessor + retriever + Gemini responder) to produce `answer` and `url_supporting` → **Frontend:** Displays the answer and references as links to docs.cow.fi and Order Book API.
+
+---
+
+## File reference
+
+| Step              | Location |
+|-------------------|----------|
+| Create docs artifact | `scripts/cow-1-create-docs-dataset/main.py` |
 | Fetch OpenAPI      | `scripts/cow-2-fetch-openapi/main.py` |
-| Estratégia docs    | `pkg/cow-brains/cow_brains/documents_cow.py` |
-| Estratégia OpenAPI | `pkg/cow-brains/cow_brains/openapi_orderbook.py` |
+| Docs strategy     | `pkg/cow-brains/cow_brains/documents_cow.py` |
+| OpenAPI strategy  | `pkg/cow-brains/cow_brains/openapi_orderbook.py` |
 | DataExporter       | `pkg/cow-brains/cow_brains/data_exporter.py` |
 | Build FAISS        | `pkg/cow-brains/cow_brains/build_faiss.py` |
-| Config CoW         | `pkg/cow-brains/cow_brains/config.py` |
+| CoW config         | `pkg/cow-brains/cow_brains/config.py` |
 | process_question   | `pkg/cow-brains/cow_brains/process_question.py` |
-| API HTTP           | `pkg/op-app/op_app/api.py` |
-| RAG (preprocessador + respondente) | `pkg/op-brains/op_brains/chat/system_structure.py`, `model_utils.py` |
-| Referências no UI  | `www/src/lib/chat-utils.ts` (`formatAnswerWithReferences`) |
+| HTTP API           | `pkg/op-app/op_app/api.py` |
+| RAG (preprocessor + responder) | `pkg/op-brains/op_brains/chat/system_structure.py`, `model_utils.py` |
+| References in UI   | `www/src/lib/chat-utils.ts` (`formatAnswerWithReferences`) |

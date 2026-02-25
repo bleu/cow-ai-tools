@@ -1,42 +1,42 @@
-# CoW PoC – Avaliação (Fase 3.2)
+# CoW PoC – Evaluation (Phase 3.2)
 
-Instruções para rodar as **golden questions** no chat, medir relevância/precisão e documentar resultados e gaps.
+Instructions for running the **golden questions** in the chat, measuring relevance/accuracy, and documenting results and gaps.
 
-## Como avaliar
+## How to evaluate
 
-1. **Subir o stack:** artefato docs + (opcional) OpenAPI em `data/cow-docs/`, FAISS construído, API com `USE_COW=true`, frontend com `NEXT_PUBLIC_BRAND=cow` e `NEXT_PUBLIC_CHAT_API_URL` apontando para a API.
+1. **Bring up the stack:** docs artifact + (optional) OpenAPI in `data/cow-docs/`, FAISS built, API with `USE_COW=true`, frontend with `NEXT_PUBLIC_BRAND=cow` and `NEXT_PUBLIC_CHAT_API_URL` pointing to the API.
 
-2. **Fonte das perguntas:** [docs/cow_golden_questions.md](cow_golden_questions.md) (24 perguntas em 5 áreas).
+2. **Question source:** [docs/cow_golden_questions.md](cow_golden_questions.md) (24 questions in 5 areas).
 
-3. **Por cada pergunta:**
-   - Colar a pergunta no chat (sem contexto extra).
-   - Anotar: **resposta útil (sim/não)**, **cita doc/spec (sim/não)**, **precisão em parâmetro (sim/não/NA)**, **notas** (erros inventados, URL errada, etc.).
+3. **For each question:**
+   - Paste the question in the chat (no extra context).
+   - Annotate: **useful response (yes/no)**, **cites doc/spec (yes/no)**, **parameter-level accuracy (yes/no/N/A)**, **notes** (hallucinated errors, wrong URL, etc.).
 
-4. **Critérios de sucesso (sugerido):**
-   - Resposta cita documentação ou Order Book API quando aplicável.
-   - Resposta é precisa em nível de parâmetro (nomes de campos, endpoints) quando a pergunta pede.
-   - Não inventa endpoints, códigos de erro ou comportamentos.
+4. **Success criteria (suggested):**
+   - Response cites documentation or Order Book API when applicable.
+   - Response is accurate at parameter level (field names, endpoints) when the question asks for it.
+   - Does not invent endpoints, error codes, or behavior.
 
-## Template de resultados
+## Results template
 
-Preencher após uma rodada de avaliação. Data da avaliação: ___________
+Fill in after an evaluation run. Evaluation date: ___________
 
-| # | Pergunta (resumida) | Resposta útil | Cita doc/spec | Precisão parâmetro | Notas |
-|---|---------------------|---------------|----------------|--------------------|-------|
+| # | Question (summary) | Useful response | Cites doc/spec | Parameter accuracy | Notes |
+|---|--------------------|-----------------|----------------|--------------------|-------|
 | 1 | buyAmount + slippage | | | | |
-| 2 | buyAmount inclui slippage? | | | | |
+| 2 | Does buyAmount include slippage? | | | | |
 | … | … | | | | |
-| 24 | status do order | | | | |
+| 24 | order status | | | | |
 
-**Resumo:** ___/24 respostas úteis; ___/24 citam doc/spec; ___/24 precisão parâmetro quando aplicável.
+**Summary:** ___/24 useful responses; ___/24 cite doc/spec; ___/24 parameter accuracy when applicable.
 
-## Gaps identificados
+## Identified gaps
 
-(Listar temas ou perguntas em que o assistente falhou ou respondeu de forma vaga/incorreta, e possíveis melhorias: doc faltando, chunking, prompt, etc.)
+(List topics or questions where the assistant failed or answered vaguely/incorrectly, and possible improvements: missing doc, chunking, prompt, etc.)
 
 - 
 - 
 
 ---
 
-*Atualizar este ficheiro após cada rodada de avaliação para acompanhar evolução do PoC.*
+*Update this file after each evaluation run to track PoC evolution.*

@@ -1,6 +1,6 @@
-# CoW PoC – Golden Questions (Fase 3)
+# CoW PoC – Golden Questions (Phase 3)
 
-Perguntas de referência para validar o assistente nas áreas prioritárias da RFP. Use para avaliação manual ou em scripts de regressão.
+Reference questions to validate the assistant in the RFP priority areas. Use for manual evaluation or in regression scripts.
 
 ## Order creation (slippage, amounts)
 
@@ -43,4 +43,4 @@ Perguntas de referência para validar o assistente nas áreas prioritárias da R
 
 ---
 
-**Critérios de sucesso (sugerido):** a resposta deve citar a documentação ou o spec (docs.cow.fi / Order Book API), ser precisa em nível de parâmetro quando aplicável, e não inventar endpoints ou comportamentos.
+**Success criteria (suggested):** the response should cite the documentation or spec (docs.cow.fi / Order Book API), be accurate at parameter level when applicable, and not invent endpoints or behavior.

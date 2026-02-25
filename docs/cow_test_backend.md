@@ -1,30 +1,30 @@
-# Testar o backend CoW (health + RAG/FAISS)
+# Testing the CoW Backend (health + RAG/FAISS)
 
-Use estes passos para validar se o backend está funcionando: health check, depois uma pergunta real (RAG + Gemini).
+Use these steps to verify the backend is working: health check, then a real question (RAG + Gemini).
 
-## 1. Health check (API no ar)
+## 1. Health check (API up)
 
-Confirma que a API está respondendo (não testa FAISS nem Gemini).
+Confirms the API is responding (does not test FAISS or Gemini).
 
-**Local (porta 8000):**
+**Local (port 8000):**
 ```bash
 curl -s http://localhost:8000/up
 ```
 
-**Vercel (troque pela URL do seu projeto):**
+**Deployed (replace with your backend URL):**
 ```bash
-curl -s https://cow-ai-backend.vercel.app/api/up
+curl -s https://your-backend.up.railway.app/up
 ```
 
-**Resposta esperada:** `{"status":"healthy","service":"chat-api"}` (e status HTTP 200).
+**Expected response:** `{"status":"healthy","service":"chat-api"}` (and HTTP 200).
 
-Se der 404 ou 500, o deploy ou a rota estão errados. Se der 200, siga para o passo 2.
+If you get 404 or 500, the deploy or route is wrong. If you get 200, go to step 2.
 
 ---
 
-## 2. Teste RAG (pergunta real)
+## 2. RAG test (real question)
 
-Confirma FAISS (retrieval), contexto e resposta do modelo.
+Confirms FAISS (retrieval), context, and model response.
 
 **Local:**
 ```bash
@@ -33,43 +33,43 @@ curl -s -X POST http://localhost:8000/predict \
   -d '{"question": "How do I compute or pass appData / appDataHash when creating an order?", "memory": []}'
 ```
 
-**Vercel:**
+**Deployed:**
 ```bash
-curl -s -X POST https://cow-ai-backend.vercel.app/api/predict \
+curl -s -X POST https://your-backend.up.railway.app/predict \
   -H "Content-Type: application/json" \
   -d '{"question": "How do I compute or pass appData / appDataHash when creating an order?", "memory": []}'
 ```
 
-**O que verificar na resposta (JSON):**
+**What to check in the response (JSON):**
 
-- **`error: null`** e **`data`** presente → sucesso.
-- **`data.answer`** → texto da resposta (deve falar de appData/endpoint/References).
-- **`data.url_supporting`** → array de URLs usadas (ex.: docs.cow.fi). Se for pergunta in-docs, não deve ser vazio.
-- Se **`error`** tiver mensagem tipo "CoW FAISS index not found" → FAISS não está em `OP_CHAT_BASE_PATH` (dados não subiram ou path errado).
-- Se **`error`** falar de API key / Gemini → conferir `GOOGLE_API_KEY` nas env vars do projeto Vercel.
+- **`error: null`** and **`data`** present → success.
+- **`data.answer`** → response text (should mention appData/endpoint/References).
+- **`data.url_supporting`** → array of URLs used (e.g. docs.cow.fi). For in-docs questions, it should not be empty.
+- If **`error`** says something like "CoW FAISS index not found" → FAISS is not at `OP_CHAT_BASE_PATH` (data not deployed or wrong path).
+- If **`error`** mentions API key / Gemini → check `GOOGLE_API_KEY` in the project's env vars.
 
 ---
 
-## 3. Outras perguntas de teste
+## 3. Other test questions
 
-Use perguntas do [cow_test_questions.md](./cow_test_questions.md). Exemplos in-docs (devem responder com referências):
+Use questions from [cow_test_questions.md](./cow_test_questions.md). In-docs examples (should answer with references):
 
 - `"What is the GPv2VaultRelayer and where do I find its address per chain?"`
 - `"How do I get a quote before creating an order?"`
 
-Exemplo out-of-docs (deve recusar ou dizer que não tem no contexto):
+Out-of-docs example (should decline or say it's not in context):
 
 - `"How do I create an order on Uniswap?"`
 
-Troque apenas o valor de `"question"` no `-d '{"question": "...", "memory": []}'`.
+Only change the `"question"` value in `-d '{"question": "...", "memory": []}'`.
 
 ---
 
-## 4. Resumo rápido
+## 4. Quick summary
 
-| Teste        | Endpoint        | O que valida                          |
-|-------------|-----------------|----------------------------------------|
-| Health      | `GET /api/up`   | API no ar                              |
-| RAG + modelo| `POST /api/predict` | FAISS, contexto, Gemini, normalização |
+| Test        | Endpoint        | What it validates                          |
+|-------------|-----------------|--------------------------------------------|
+| Health      | `GET /up`       | API is up                                  |
+| RAG + model | `POST /predict` | FAISS, context, Gemini, normalization     |
 
-Base URL no Vercel: `https://cow-ai-backend.vercel.app` (troque pelo seu projeto se for outro).
+Base URL: use your backend URL (e.g. `https://xxx.up.railway.app` or `https://xxx.onrender.com`).

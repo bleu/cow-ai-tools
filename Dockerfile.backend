@@ -1,0 +1,30 @@
+# Backend CoW/Optimism chat API (Quart). Use this on Railway/Render to avoid Railpack.
+# Railway: in Service Settings, set Dockerfile Path to "Dockerfile.backend" (or rename to Dockerfile).
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system deps if needed (e.g. for some Python packages)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency list and install (heavy deps: sentence-transformers, faiss, etc.)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy monorepo packages and entry script (run-backend.sh expects repo root as cwd)
+COPY pkg/ pkg/
+COPY scripts/ scripts/
+RUN chmod +x scripts/run-backend.sh
+
+# Data dir for FAISS (mount volume or copy at deploy)
+ENV OP_CHAT_BASE_PATH=/app/data
+RUN mkdir -p /app/data
+
+# Railway/Render set PORT
+ENV PORT=8000
+EXPOSE $PORT
+
+CMD ["bash", "scripts/run-backend.sh"]
