@@ -1,8 +1,8 @@
 """
 Adapter for Google Gemini (gemini-2.0-flash and embeddings) using the official google-generativeai SDK.
 - Chat: LangChain-compatible with_structured_output(...) and invoke(prompt).
-- Embeddings: LangChain-compatible embed_documents / embed_query (same GOOGLE_API_KEY).
-Set GOOGLE_API_KEY in the environment.
+- Embeddings: LangChain-compatible embed_documents / embed_query (same API key).
+One API key from Google AI Studio; set GOOGLE_API_KEY or GEMINI_API_KEY in the environment.
 Note: The deprecated SDK does not support request timeout; we wrap generate_content in a thread timeout.
 """
 import json
@@ -47,7 +47,7 @@ def _ensure_configured():
     key = _get_api_key()
     if not key:
         raise ValueError(
-            "Set GOOGLE_API_KEY (or GEMINI_API_KEY) in the environment to use Gemini."
+            "Set GOOGLE_API_KEY (or GEMINI_API_KEY) in the environment. Same key from Google AI Studio."
         )
     genai.configure(api_key=key)
     _configured = True
@@ -384,7 +384,7 @@ def _embedding_to_list(e) -> List[float]:
 
 
 class GeminiEmbeddings:
-    """LangChain-compatible embeddings using Gemini (same GOOGLE_API_KEY as chat)."""
+    """LangChain-compatible embeddings using Gemini (same API key as chat)."""
 
     def __init__(self, model: str = "models/gemini-embedding-001", **kwargs):
         _ensure_configured()

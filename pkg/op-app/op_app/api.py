@@ -39,9 +39,9 @@ def _has_google_key():
 
 if _PROJECT in ("cow", "true", "1", "yes"):
     if not _has_google_key():
-        print("WARNING: GOOGLE_API_KEY (or GEMINI_API_KEY) not set. /predict will fail until you set it and redeploy.", flush=True)
+        print("WARNING: Gemini API key not set. Set GOOGLE_API_KEY or GEMINI_API_KEY and redeploy.", flush=True)
     else:
-        print("GOOGLE_API_KEY is set.", flush=True)
+        print("Gemini API key is set.", flush=True)
 
 app = Quart(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_API_SECRET_KEY", "dev-secret")
@@ -86,8 +86,11 @@ async def predict(question, memory):
     verbose = os.getenv("COW_VERBOSE", "").strip().lower() in ("1", "true", "yes")
     result = await process_question(question, memory, verbose=verbose)
     elapsed = time.perf_counter() - t0
+    if result.get("error"):
+        print(f"[predict] question={question[:50]}... error in {elapsed:.2f}s: {result.get('error', '')[:60]}", flush=True)
+        return jsonify(result), 503
     print(f"[predict] question={question[:50]}... ok in {elapsed:.2f}s")
-    return jsonify(result)
+    return jsonify(result), 200
 
 
 if __name__ == "__main__":

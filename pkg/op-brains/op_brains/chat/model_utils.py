@@ -117,7 +117,7 @@ The user now provided the following query:
                 description="""If related_to_scope is False, needs_info should be False. Else, return True if the user is not asking you to provide any information or if all the infor you need is in the <conversation_history>. Never make up information. If you don't have enough information to answer the user's query, needs_info should be True.""",
             )
 
-            answer: str = Field(
+            answer: Optional[str] = Field(
                 default=None,
                 description=f"""Only if needs_info is False, that is, if you have enough information to answer the user's query, provide an answer to the user's query. Don't make up information. If related_to_scope is False, answer should be 'I'm sorry, but I can only answer questions about {_scope}. Is there anything specific about {_scope} you'd like to know?'""",
             )
