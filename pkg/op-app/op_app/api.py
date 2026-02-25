@@ -24,6 +24,13 @@ else:
     from op_brains.exceptions import UnsupportedVectorstoreError
     from op_brains.chat.utils import process_question
 
+# Log env state at startup (no secrets). Railway injects vars at container start; redeploy after changing them.
+_google_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+if not _google_key and _PROJECT in ("cow", "true", "1", "yes"):
+    print("WARNING: GOOGLE_API_KEY (or GEMINI_API_KEY) not set. /predict will fail until you set it and redeploy.", flush=True)
+else:
+    print("GOOGLE_API_KEY is set.", flush=True)
+
 app = Quart(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_API_SECRET_KEY", "dev-secret")
 app = cors(app)
