@@ -168,6 +168,10 @@ class RAGSystem:
                     final=reasoning_level > self.REASONING_LIMIT,
                 )
 
+                # Ensure [1], [2] in the answer text match the context URLs we sent (model may cite [2] but return only one URL)
+                if is_enough and isinstance(result, dict) and result.get("url_supporting") is not None and context_urls:
+                    result["url_supporting"] = list(context_urls)
+
                 # If responder failed (e.g. LLM error) but we have context, return a fallback so we don't loop
                 if not is_enough and context and isinstance(result, (list, tuple)) and len(result) == 3 and result[0] == "" and result[1] == []:
                     result = {"answer": "I found relevant documentation but couldn't generate a full answer. Please try rephrasing or ask a more specific question.", "url_supporting": list(context_urls)}
