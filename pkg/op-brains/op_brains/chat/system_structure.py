@@ -1,8 +1,30 @@
-from typing import Tuple, Any, Callable
+from typing import Tuple, Any, Callable, List
 from op_brains.chat.apis import access_APIs
 import pandas as pd
 
 import re
+
+# Match reference citations like [1], [2], "reference [1]", "ref [2]". Used to return only cited URLs.
+REF_CITATION_RE = re.compile(r"\b(?:reference|ref|see|below)\s*\[(\d+)\]|(?<!\w)\[(\d+)\](?=\s*(?:and|,|\.|\)|below|$))", re.IGNORECASE)
+
+
+def _cited_reference_numbers(answer_text: str, max_ref: int = 10) -> List[int]:
+    """Extract reference numbers cited in the answer (e.g. [1], [2]) so we only return those URLs."""
+    if not answer_text:
+        return []
+    numbers = set()
+    for m in REF_CITATION_RE.finditer(answer_text):
+        n = int(m.group(1) or m.group(2))
+        if 1 <= n <= max_ref:
+            numbers.add(n)
+    # Also catch "References: [1] [2] [3]" at the end
+    refs_section = re.search(r"references?\s*:\s*((?:\[\d+\]\s*)+)", answer_text, re.IGNORECASE)
+    if refs_section:
+        for n in re.finditer(r"\[(\d+)\]", refs_section.group(1)):
+            num = int(n.group(1))
+            if 1 <= num <= max_ref:
+                numbers.add(num)
+    return sorted(numbers) if numbers else []
 
 
 class RAGSystem:
@@ -168,9 +190,15 @@ class RAGSystem:
                     final=reasoning_level > self.REASONING_LIMIT,
                 )
 
-                # Ensure [1], [2] in the answer text match the context URLs we sent (model may cite [2] but return only one URL)
+                # Use only the references actually cited in the answer: parse [1], [2] and return context_urls for those indices.
                 if is_enough and isinstance(result, dict) and result.get("url_supporting") is not None and context_urls:
-                    result["url_supporting"] = list(context_urls)
+                    answer_text = result.get("answer") or ""
+                    cited = _cited_reference_numbers(answer_text)
+                    if cited:
+                        max_n = min(max(cited), 6)
+                        result["url_supporting"] = list(context_urls)[:max_n]
+                    else:
+                        result["url_supporting"] = list(result.get("url_supporting") or [])[:6]
 
                 # If responder failed (e.g. LLM error) but we have context, return a fallback so we don't loop
                 if not is_enough and context and isinstance(result, (list, tuple)) and len(result) == 3 and result[0] == "" and result[1] == []:
