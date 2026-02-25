@@ -72,9 +72,6 @@ notebooks/
 *.ipynb
 .ipynb_checkpoints/
 
-# Scripts (not needed in production)
-scripts/
-
 # Temporary files
 tmp/
 temp/
