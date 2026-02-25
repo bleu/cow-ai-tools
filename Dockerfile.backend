@@ -5,14 +5,14 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system deps if needed (e.g. for some Python packages)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy dependency list and install (heavy deps: sentence-transformers, faiss, etc.)
+# Copy dependency list and install (heavy deps: sentence-transformers, faiss, torch).
+# Install build-essential only for the pip step, then remove it to keep the image smaller.
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
+    && pip install --no-cache-dir -r requirements.txt \
+    && apt-get purge -y build-essential \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* /root/.cache
 
 # Copy monorepo packages and entry script (run-backend.sh expects repo root as cwd)
 COPY pkg/ pkg/

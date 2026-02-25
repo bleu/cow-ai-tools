@@ -27,6 +27,16 @@ Railway's Railpack may fail with **"Error creating build plan with Railpack"** o
    - `NEXT_PUBLIC_CHAT_API_URL` = `https://<your-railway-url>/predict`  
    (The Quart API exposes `/up` and `/predict` at the root; there is no `/api` prefix like on Vercel.)
 
+### Image size limit (Railway)
+
+Railway limits Docker images to **4 GB** on the default plan. This backend image (torch, sentence-transformers, faiss-cpu) is typically **~9 GB**, so the build may fail with *"Image of size X GB exceeded limit of 4.0 GB"*.
+
+**Options:**
+
+- **Use Render instead** — Render does not enforce the same image size cap for web services; building with the same Dockerfile or with Build/Start commands often works. Prefer **Option 2: Render** below if you hit the limit on Railway.
+- **Upgrade Railway** — Higher plans may allow larger images; check [Railway pricing](https://railway.app/pricing).
+- The Dockerfile is already optimized (build tools removed after `pip install`); further shrinking would require dropping or replacing heavy deps (e.g. different embedding model).
+
 ### Test the backend
 
 ```bash
