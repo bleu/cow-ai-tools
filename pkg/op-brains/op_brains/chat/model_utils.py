@@ -267,8 +267,17 @@ class ContextHandling:
                 for cc in c:
                     if i < len(cc):
                         contexts_to_be_explored.append(cc[i])
+            # Use composite key so multiple chunks from same URL (e.g. OpenAPI schemas) are kept
+            def _context_key(doc):
+                url = doc.metadata.get("url") or ""
+                t = doc.metadata.get("type_db_info") or ""
+                if t == "api-schema":
+                    return f"{url}|schema:{doc.metadata.get('schema_name', '')}"
+                if t == "api-endpoint":
+                    return f"{url}|{doc.metadata.get('path', '')}|{doc.metadata.get('method', '')}"
+                return url
             contexts_to_be_explored = {
-                c.metadata.get("url"): c
+                _context_key(c): c
                 for c in contexts_to_be_explored
                 if c.metadata.get("url")
             }
@@ -277,7 +286,6 @@ class ContextHandling:
 
     @staticmethod
     def format(context: dict, context_dict: dict) -> Tuple[str, list]:
-        urls = list(context.keys())
         out = []
         for c in context.values():
             type_db = c.metadata.get("type_db_info", "")
@@ -307,7 +315,9 @@ class ContextHandling:
                                 CONTENT=c.page_content,
                             )
                         )
-        return "".join(out), urls
+        # Return actual URLs for response (keys may be composite for api-schema/endpoint)
+        url_list = list(dict.fromkeys(c.metadata.get("url") for c in context.values() if c.metadata.get("url")))
+        return "".join(out), url_list
 
     @staticmethod
     async def reordering(
