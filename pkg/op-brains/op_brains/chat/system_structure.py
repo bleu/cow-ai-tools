@@ -195,7 +195,8 @@ class RAGSystem:
                     answer_text = result.get("answer") or ""
                     cited = _cited_reference_numbers(answer_text)
                     if cited:
-                        max_n = min(max(cited), 6)
+                        # Return enough URLs so every cited ref exists (e.g. if model says [7], [8], [9], return 9 URLs). Cap at 10.
+                        max_n = min(max(cited), 10)
                         result["url_supporting"] = list(context_urls)[:max_n]
                     else:
                         result["url_supporting"] = list(result.get("url_supporting") or [])[:6]
