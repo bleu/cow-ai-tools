@@ -20,6 +20,7 @@ COW_RESPONDER_EXTRA = """
 
 Your audience is developers integrating with the CoW Protocol. Be direct and practical:
 - When the provided context clearly describes appData, appDataHash, the order book API, or how to upload/register data, answer from that context. Do not say you lack information if the context explains how to compute or pass appData/appDataHash—use the context to answer.
+- For token approval, ABI, or gasless swaps: the docs describe ERC-20 allowances to the GPv2VaultRelayer, Balancer external/internal balances (gas-efficient), and the vault relayer. If the context mentions any of these (e.g. "Fallback ERC-20 Allowances", "GPv2VaultRelayer", "approve", "sellTokenBalance"), you must use it to answer. Do not say "I cannot provide" when the context clearly describes approval: give the steps (e.g. approve the sell token for the GPv2VaultRelayer contract; for gasless use internal/external balances per context) and a minimal code hint in a code block. Cite the reference; if the exact ABI is not in the context, say "For the contract address and full ABI see reference [N] below."
 - For "how do I" questions (approval, API calls, signing, quoting, order creation): always include a minimal code example inside a markdown fenced code block (e.g. ```bash ... ``` or ```json ... ```). Never output raw curl or code without wrapping it in a code block—use bash/curl for HTTP, json for bodies, javascript/typescript when the context shows SDK. One short snippet is better than none.
 - When you mention "official documentation", "docs", or "find the address/endpoint": always tie it to the reference the user can click. Write e.g. "See reference [1] below for the GPv2VaultRelayer address per network" or "The exact endpoint is documented in [1]." so the user uses [1] instead of searching. Never say only "find it in the official documentation" without pointing to [1] (or the relevant reference number).
 - If the context contains concrete values (contract address, base URL, endpoint path), use them in the code example instead of placeholders when possible (e.g. mainnet GPv2VaultRelayer address if present in the context).
@@ -66,12 +67,28 @@ async def process_question(
         default_retriever = await model_utils.RetrieverBuilder.build_faiss_retriever(
             faiss_path=COW_FAISS_PATH,
             embedding_model=EMBEDDING_MODEL,
-            k=5,
+            k=12,
         )
         questions_index_retriever = keywords_index_retriever = default_retriever
 
         def contains(must_contain):
             return lambda similar: [s for s in similar if must_contain in s]
+
+        def _merge_contexts(primary: list, extra: list, max_total: int = 14) -> list:
+            """Merge two context lists by URL, keeping order of primary then extra, deduped."""
+            seen_urls = set()
+            out = []
+            for doc_list in (primary, extra):
+                for doc in doc_list:
+                    meta = getattr(doc, "metadata", None) or {}
+                    url = meta.get("url") or getattr(doc, "url", None)
+                    key = url or id(doc)
+                    if key not in seen_urls:
+                        seen_urls.add(key)
+                        out.append(doc)
+                        if len(out) >= max_total:
+                            return out
+            return out
 
         async def retriever(query: dict, reasoning_level: int) -> list:
             if reasoning_level < 1 and "keyword" in query:
@@ -81,11 +98,20 @@ async def process_question(
                     )
                 return await keywords_index_retriever(query["keyword"], contexts_df)
             if "question" in query:
+                q = query["question"]
                 if reasoning_level < 1:
-                    ctx = await questions_index_retriever(query["question"], contexts_df)
+                    ctx = await questions_index_retriever(q, contexts_df)
                     if len(ctx) > 0:
                         return ctx
-                return await default_retriever(query["question"], contexts_df)
+                main_ctx = await default_retriever(q, contexts_df)
+                # Boost retrieval for approval/ABI/gasless so vault-relayer chunk is included
+                if any(t in (q or "").lower() for t in ("approval", "approve", "abi", "gasless", "allowance", "vault relayer")):
+                    boost_ctx = await default_retriever(
+                        "GPv2VaultRelayer token allowance approval ERC-20 gasless",
+                        contexts_df,
+                    )
+                    return _merge_contexts(main_ctx, boost_ctx)
+                return main_ctx
             if "query" in query:
                 return await default_retriever(query["query"], contexts_df)
             return []
