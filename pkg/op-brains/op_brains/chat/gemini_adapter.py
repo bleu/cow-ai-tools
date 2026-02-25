@@ -25,11 +25,26 @@ T = TypeVar("T")
 _configured = False
 
 
+def _get_api_key() -> str:
+    """Resolve API key from env or from file (for platforms where env is not passed to the process)."""
+    key = (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
+    if key:
+        return key
+    for env_name in ("GOOGLE_API_KEY_FILE", "GEMINI_API_KEY_FILE"):
+        path = os.getenv(env_name)
+        if path and os.path.isfile(path):
+            with open(path) as f:
+                key = (f.read() or "").strip()
+            if key:
+                return key
+    return ""
+
+
 def _ensure_configured():
     global _configured
     if _configured:
         return
-    key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    key = _get_api_key()
     if not key:
         raise ValueError(
             "Set GOOGLE_API_KEY (or GEMINI_API_KEY) in the environment to use Gemini."
