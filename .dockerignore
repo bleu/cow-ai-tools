@@ -45,12 +45,13 @@ yarn-debug.log*
 yarn-error.log*
 www/
 
-# Data files (should be volume mounted or fetched from sources)
-data/
+# Data files (volume or copy); allow data/cow-docs/faiss for backend image
+data/*
+!data/cow-docs/
+data/cow-docs/*
+!data/cow-docs/faiss/
 *.csv
 *.json
-*.pkl
-*.faiss
 *.db
 
 # Logs

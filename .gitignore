@@ -17,5 +17,7 @@ __pycache__
 .aider*
 .env.docker
 
-# CoW PoC generated data (optional: remove to track artifact)
-data/cow-docs/
+# CoW PoC generated data (ignore contents except faiss so we can commit the index)
+data/cow-docs/*
+!data/cow-docs/faiss/
+!data/cow-docs/faiss/*

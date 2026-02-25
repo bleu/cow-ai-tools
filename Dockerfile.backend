@@ -18,9 +18,10 @@ COPY pkg/ pkg/
 COPY scripts/ scripts/
 RUN chmod +x scripts/run-backend.sh
 
-# Data dir for FAISS (mount volume or copy at deploy)
+# FAISS index: must exist before build. Run locally: python -m cow_brains.build_faiss (see docs).
 ENV OP_CHAT_BASE_PATH=/app/data
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data/cow-docs
+COPY data/cow-docs/faiss /app/data/cow-docs/faiss
 
 # Railway/Render set PORT
 ENV PORT=8000

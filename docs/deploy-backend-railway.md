@@ -19,9 +19,12 @@ Railway's Railpack may fail with **"Error creating build plan with Railpack"** o
    - `PROJECT` = `cow`
    - `OP_CHAT_BASE_PATH` = path to data (see below)
    - `GOOGLE_API_KEY` = your Gemini API key
-6. **Data (FAISS):** Build the index locally (`python -m cow_brains.build_faiss` with `OP_CHAT_BASE_PATH` pointing to a `data/` folder), then:
-   - **Option A:** Include `data/cow-docs/faiss` in the repo (adjust `.gitignore`) and use `OP_CHAT_BASE_PATH=/app/data` (or the working directory on Railway).
-   - **Option B:** Use Railway **Volumes** to persist a `data` folder and build FAISS on first deploy (build command that runs build_faiss).
+6. **Data (FAISS) — required for RAG:** The Dockerfile copies `data/cow-docs/faiss` into the image. **Before** your first deploy (or any deploy from Git), generate that folder locally:
+   - From repo root: ensure you have `data/cow-docs/cow_docs.txt` (and optionally `openapi.yml`). Create them with the scripts in `scripts/cow-1-create-docs-dataset` and `scripts/cow-2-fetch-openapi` if needed.
+   - Then run:  
+     `cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=<your-key> poetry run python -m cow_brains.build_faiss`  
+     This creates `data/cow-docs/faiss/` (e.g. `index.faiss`, `index.pkl`).
+   - Either **commit** `data/cow-docs/faiss/` (remove it from `.gitignore` if present) so Railway’s build can copy it, or build the Docker image locally (where the folder exists) and push to your registry. Set `OP_CHAT_BASE_PATH=/app/data` in Railway variables.
 7. Railway generates a public URL (e.g. `https://cow-ai-backend-production.up.railway.app`). In **Settings** → **Networking** → **Generate Domain** if you don't have one yet.
 8. In the **frontend** (Vercel or elsewhere), set:
    - `NEXT_PUBLIC_CHAT_API_URL` = `https://<your-railway-url>/predict`  
