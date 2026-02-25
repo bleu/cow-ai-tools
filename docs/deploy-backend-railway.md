@@ -29,13 +29,7 @@ Railway's Railpack may fail with **"Error creating build plan with Railpack"** o
 
 ### Image size limit (Railway)
 
-Railway limits Docker images to **4 GB** on the default plan. This backend image (torch, sentence-transformers, faiss-cpu) is typically **~9 GB**, so the build may fail with *"Image of size X GB exceeded limit of 4.0 GB"*.
-
-**Options:**
-
-- **Use Render instead** — Render does not enforce the same image size cap for web services; building with the same Dockerfile or with Build/Start commands often works. Prefer **Option 2: Render** below if you hit the limit on Railway.
-- **Upgrade Railway** — Higher plans may allow larger images; check [Railway pricing](https://railway.app/pricing).
-- The Dockerfile is already optimized (build tools removed after `pip install`); further shrinking would require dropping or replacing heavy deps (e.g. different embedding model).
+Railway limits Docker images to **4 GB** on the default plan. To stay under this limit, the backend image uses **`requirements-backend.txt`** (no torch, sentence-transformers, or transformers). CoW uses **Gemini only** for embeddings, so those packages are not needed at runtime. The image should be under 4 GB; if it still exceeds, try **Render** (Option 2) or upgrade Railway.
 
 ### Test the backend
 
