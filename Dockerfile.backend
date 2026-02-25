@@ -22,6 +22,7 @@ RUN chmod +x scripts/run-backend.sh
 ENV OP_CHAT_BASE_PATH=/app/data
 RUN mkdir -p /app/data/cow-docs
 COPY data/cow-docs/faiss /app/data/cow-docs/faiss
+RUN ls -la /app/data/cow-docs/faiss && test -f /app/data/cow-docs/faiss/index.faiss || (echo "ERROR: FAISS index missing in image" && exit 1)
 
 # Railway/Render set PORT
 ENV PORT=8000
