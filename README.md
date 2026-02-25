@@ -2,7 +2,7 @@
 
 This repository is a fork of [op-ai-tools](https://github.com/bleu/op-ai-tools), adapted for **CoW Protocol Integration Documentation** (PoC aligned with the [CoW Grants RFP](https://forum.cow.fi/t/cow-protocol-integration-documentation/3360)).
 
-**Planning:** See **[docs/COW_POC_PLAN.md](docs/COW_POC_PLAN.md)** for scope, phases, data sources, and implementation checklist.
+**Planning:** See **[docs/COW_POC_PLAN.md](docs/COW_POC_PLAN.md)** for scope, phases, data sources, and implementation checklist. **Forum proposal (next phase):** [docs/COW_PROPOSAL_NEXT_PHASE.md](docs/COW_PROPOSAL_NEXT_PHASE.md).
 
 ---
 
