@@ -10,15 +10,18 @@ interface FormattedMessageProps {
 
 const LINK_RE = /(<a\s+href="([^"]*)"[^>]*>([\s\S]*?)<\/a>)/gi;
 const INLINE_CODE_RE = /`([^`]+)`/g;
+const BOLD_RE = /\*\*([^*]+)\*\*/g;
 
-function renderInlineCodeAndText(str: string): React.ReactNode[] {
+function renderInlineCodeBoldAndText(str: string): React.ReactNode[] {
   const out: React.ReactNode[] = [];
   let last = 0;
   let key = 0;
   let match: RegExpExecArray | null;
   INLINE_CODE_RE.lastIndex = 0;
   while ((match = INLINE_CODE_RE.exec(str)) !== null) {
-    if (match.index > last) out.push(str.slice(last, match.index));
+    if (match.index > last) {
+      out.push(...renderBoldAndText(str.slice(last, match.index), (k) => `bold-${key}-${k}`));
+    }
     out.push(
       <code
         key={key++}
@@ -28,6 +31,23 @@ function renderInlineCodeAndText(str: string): React.ReactNode[] {
       </code>
     );
     last = match.index + match[0].length;
+  }
+  if (last < str.length) {
+    out.push(...renderBoldAndText(str.slice(last), (k) => `bold-${key}-${k}`));
+  }
+  return out;
+}
+
+function renderBoldAndText(str: string, keyFn: (k: number) => string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  let boldMatch: RegExpExecArray | null;
+  BOLD_RE.lastIndex = 0;
+  while ((boldMatch = BOLD_RE.exec(str)) !== null) {
+    if (boldMatch.index > last) out.push(str.slice(last, boldMatch.index));
+    out.push(<strong key={keyFn(key++)}>{boldMatch[1]}</strong>);
+    last = boldMatch.index + boldMatch[0].length;
   }
   if (last < str.length) out.push(str.slice(last));
   return out;
@@ -62,7 +82,7 @@ function renderProse(text: string): React.ReactNode {
       continue;
     }
     nodes.push(
-      <React.Fragment key={i}>{renderInlineCodeAndText(p)}</React.Fragment>
+      <React.Fragment key={i}>{renderInlineCodeBoldAndText(p)}</React.Fragment>
     );
   }
   return nodes;
