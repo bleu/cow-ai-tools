@@ -45,7 +45,7 @@ export function TopicHeader({
                 className="h-4 bg-muted-foreground w-[1px] md:w-[1.5px] mx-1"
               />
               <Link
-                href={`https://gov.optimism.io/u/${username}/summary`}
+                href="#"
                 target="_blank"
                 className="text-blue-500 underline w-auto whitespace-nowrap"
                 onClick={(event) => {

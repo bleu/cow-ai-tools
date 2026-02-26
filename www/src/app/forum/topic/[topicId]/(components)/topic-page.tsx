@@ -71,7 +71,7 @@ export function TopicPage({ topic }: TopicPageProps) {
       )}
 
       <div>
-        <div className="flex items-center justify-end gap-x-4 text-optimism">
+        <div className="flex items-center justify-end gap-x-4 text-cow">
           <Feedback
             id={topic.id}
             title={topic.title}
@@ -89,7 +89,7 @@ export function TopicPage({ topic }: TopicPageProps) {
           className="text-blue-500 underline underline-offset-2"
           prefetch={false}
         >
-          gov.optimism.io
+          View original
         </Link>
       </Section>
 

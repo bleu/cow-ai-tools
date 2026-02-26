@@ -47,7 +47,7 @@ For the PoC the backend was reduced to the minimum:
 - **Kept:** Quart, CORS, `GET /up` (health), `POST /predict` (question + memory → RAG).
 - **Removed:** Tortoise/DB, PostHog, Honeybadger, Quart-Tasks (cron), rate limiter, forum/snapshot sync, analytics events in predict.
 
-The app (`pkg/op-app`) now depends only on what is needed to serve the chat; `op-core` and `op-data` remain as transitive dependencies of `op-brains` until migration to file-only sources (CoW docs + local FAISS). Once there is `cow-brains` with docs + OpenAPI in file and local FAISS, `op-data` and `op-core` can also be removed from the stack.
+The app (`pkg/cow-app`) depends only on what is needed to serve the chat: `cow-brains`, `rag-brains`, `cow-core`. No database; CoW docs + local FAISS only.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -57,13 +57,13 @@ The app (`pkg/op-app`) now depends only on what is needed to serve the chat; `op
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Backend (Quart) – pkg/op-app (simplified)                       │
+│  Backend (Quart/uvicorn) – pkg/cow-app                            │
 │  GET /up | POST /predict { question, memory } → RAG → { data, error }│
 └─────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  RAG (pkg/op-brains → cow-brains)                                 │
+│  RAG (pkg/cow-brains + pkg/rag-brains)                            │
 │  • Retriever: FAISS + indices (keywords/questions)               │
 │  • Expander: query → questions/keywords                          │
 │  • LLM: response with retrieved context                           │
@@ -192,8 +192,8 @@ The app (`pkg/op-app`) now depends only on what is needed to serve the chat; `op
 
 ### 8.4 Backend and frontend
 
-- [x] **PoC backend:** API already simplified: Quart + CORS + `/up` + `/predict` only (no DB, analytics, cron). See `pkg/op-app/op_app/api.py`.
-- [x] CoW backend: op-app with `USE_COW=true` calls `process_question` from op-brains and uses CoW FAISS/indices (docs + OpenAPI).
+- [x] **PoC backend:** API simplified: Quart/uvicorn + CORS + `/up` + `/predict` only (no DB, analytics, cron). See `pkg/cow-app/cow_app/api.py`.
+- [x] CoW backend: cow-app calls `process_question` from cow-brains and uses CoW FAISS/indices (docs + OpenAPI) via rag-brains.
 - [x] **System prompt (2.5):** In `model_utils.py`, CoW instructions in responder (parameter-level, cite endpoint/URL) and in Answer; preprocessor with CoW terms; `ContextHandling.format` includes `docs_fragment` and `api-endpoint`/`api-schema` in context.
 - [x] Frontend: CoW branding via `NEXT_PUBLIC_BRAND=cow` (header “CoW Protocol”, empty state, quick prompts: buyAmount/slippage, gasless approval, fast vs optimal, errors). `.envrc.example`: `NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000/predict`.
 

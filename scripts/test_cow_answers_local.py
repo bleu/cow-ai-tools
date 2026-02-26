@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test the four golden questions locally (RAG + Gemini).
-Run: cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=../../data poetry run python ../../scripts/test_cow_answers_local.py
+Run: cd pkg/cow-app && OP_CHAT_BASE_PATH=../../data poetry run python ../../scripts/test_cow_answers_local.py
 """
 import asyncio
 import os
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     if repo not in sys.path:
         sys.path.insert(0, repo)
 
-_env = os.path.join(repo, "pkg", "op-app", ".env")
+_env = os.path.join(repo, "pkg", "cow-app", ".env")
 if os.path.isfile(_env):
     from dotenv import load_dotenv
     load_dotenv(_env)

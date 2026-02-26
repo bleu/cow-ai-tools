@@ -4,7 +4,7 @@ import os
 
 from cow_brains.config import COW_FAISS_PATH, EMBEDDING_MODEL
 from cow_brains.data_exporter import DataExporter
-from op_brains.chat.apis import access_APIs
+from rag_brains.chat.apis import access_APIs
 from langchain_community.vectorstores import FAISS
 
 

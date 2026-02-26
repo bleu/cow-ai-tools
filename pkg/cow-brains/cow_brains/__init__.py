@@ -1,6 +1,6 @@
 """
 CoW Protocol RAG: docs + Order Book API. No Optimism/OP code.
-Use this package when PROJECT=cow; use op_brains when running Optimism.
+CoW-only RAG: config, documents, build_faiss, process_question (uses rag_brains).
 """
 from cow_brains.process_question import process_question
 from cow_brains.config import (

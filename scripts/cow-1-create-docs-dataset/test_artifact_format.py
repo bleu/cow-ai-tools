@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test artifact format and CowDocsProcessingStrategy parsing logic without full op_brains deps.
+Test artifact format and CowDocsProcessingStrategy parsing logic without full rag_brains/cow_brains deps.
 Run from repo root: python scripts/cow-1-create-docs-dataset/test_artifact_format.py
 """
 import re

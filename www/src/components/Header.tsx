@@ -12,17 +12,17 @@ export function Header() {
       </div>
       <div className="w-full flex-1 flex justify-between items-center">
         <Link
-          href="/forum/latest-topics"
-          className="flex flex-col gap-x-3 md:flex-row"
+          href="/"
+          className="flex flex-col gap-x-3 md:flex-row items-center gap-2"
         >
           <Image
-            src="/optimism.svg"
-            alt="logo"
-            width={100}
-            height={100}
-            className="w-[100px] md:w-[150px]"
+            src="/cow-ai-logo.png"
+            alt="CoW AI"
+            width={40}
+            height={40}
+            className="h-8 w-8 md:h-9 md:w-9 rounded-full object-cover"
           />
-          <span className="text-xs md:text-sm font-medium">GovSummarizer</span>
+          <span className="text-base font-semibold text-cow">CoW AI</span>
         </Link>
       </div>
     </header>

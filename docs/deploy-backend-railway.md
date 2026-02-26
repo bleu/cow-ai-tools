@@ -13,7 +13,6 @@ Railway's Railpack may fail with **"Error creating build plan with Railpack"** o
 3. **Variables** (environment variables) — add **before** the first deploy:
    - `RAILWAY_DOCKERFILE_PATH` = `Dockerfile.backend`  
    (so Railway uses Docker instead of Railpack.)
-   - `PROJECT` = `cow`
    - `OP_CHAT_BASE_PATH` = `/app/data`
    - `GOOGLE_API_KEY` = your Gemini API key (from [Google AI Studio](https://aistudio.google.com/apikey))
    - **Important:** After adding or changing any variable, trigger a **new deployment** (e.g. Deployments → ⋮ → Redeploy). Railway injects variables when the container starts; existing containers keep the old env until redeployed.
@@ -23,7 +22,7 @@ Railway's Railpack may fail with **"Error creating build plan with Railpack"** o
 5. **Data (FAISS) — required for RAG:** The Dockerfile copies `data/cow-docs/faiss` into the image. **Before** your first deploy (or any deploy from Git), generate that folder locally:
    - From repo root: ensure you have `data/cow-docs/cow_docs.txt` (and optionally `openapi.yml`). Create them with the scripts in `scripts/cow-1-create-docs-dataset` and `scripts/cow-2-fetch-openapi` if needed.
    - Then run:  
-     `cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=<your-key> poetry run python -m cow_brains.build_faiss`  
+     `cd pkg/cow-app && OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=<your-key> poetry run python -m cow_brains.build_faiss`  
      This creates `data/cow-docs/faiss/` (e.g. `index.faiss`, `index.pkl`).
    - Either **commit** `data/cow-docs/faiss/` (remove it from `.gitignore` if present) so Railway’s build can copy it, or build the Docker image locally (where the folder exists) and push to your registry. Set `OP_CHAT_BASE_PATH=/app/data` in Railway variables.
 6. Railway generates a public URL (e.g. `https://cow-ai-backend-production.up.railway.app`). In **Settings** → **Networking** → **Generate Domain** if you don't have one yet.

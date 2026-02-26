@@ -9,12 +9,6 @@ import type React from "react";
 import { Fragment, useEffect, useState } from "react";
 import { Button } from "../ui/button";
 
-const isCow = typeof process !== "undefined" && process.env.NEXT_PUBLIC_BRAND === "cow";
-const brandColor = isCow ? "#33D0FF" : "#FF0420";
-const brandHover = isCow ? "hover:bg-cow/15" : "hover:bg-optimism/15";
-const brandText = isCow ? "hover:text-cow text-cow" : "hover:text-optimism text-optimism";
-const brandBg = isCow ? "bg-cow/15" : "bg-optimism/15";
-
 export default function ChatSidebar() {
   const { chats, selectedChatId, setSelectedChatId, addChat, removeChat } =
     useChatStore();
@@ -36,19 +30,17 @@ export default function ChatSidebar() {
   };
 
   return (
-    <aside
-      className={`w-72 min-w-0 flex flex-col h-full ${isCow ? "bg-cow-surface" : "bg-chat-primary"}`}
-    >
+    <aside className="w-72 min-w-0 flex flex-col h-full bg-cow-surface">
       <div className="flex items-center justify-between p-4 mt-6 md:mt-0">
         <h2 className="font-bold text-lg">
           Chats ({chatCount})
         </h2>
         <Button
-          className={cn("p-2", brandHover)}
+          className={cn("p-2", "hover:bg-cow/15")}
           variant="link"
           onClick={addChat}
         >
-          <FilePlusIcon color={brandColor} className="w-6 h-6" />
+          <FilePlusIcon color="#33D0FF" className="w-6 h-6" />
         </Button>
       </div>
       <div className="h-screen overflow-y-auto px-4">
@@ -59,9 +51,8 @@ export default function ChatSidebar() {
               <div
                 className={cn(
                   "flex group items-center justify-between px-2 py-1 w-full rounded-lg font-medium text-sm",
-                  isCow ? "text-chat-secondary hover:bg-cow/10" : "text-chat-secondary hover:text-optimism",
-                  isCow && selectedChatId === chat.id && "bg-cow/10",
-                  !isCow && selectedChatId === chat.id && `${brandText} ${brandBg}`,
+                  "text-chat-secondary hover:bg-cow/10",
+                  selectedChatId === chat.id && "bg-cow/10",
                 )}
               >
                 <button
@@ -75,15 +66,14 @@ export default function ChatSidebar() {
                   </span>
                 </button>
                 <Button
-                  className={cn("p-1 ml-1", brandHover)}
+                  className={cn("p-1 ml-1", "hover:bg-cow/15")}
                   size="sm"
                   variant="link"
                   onClick={(e) => handleRemoveChat(e, chat.id)}
                 >
                   <TrashIcon
                     className={cn(
-                      "group-hover:opacity-100 opacity-0 w-5 h-5",
-                      isCow ? "text-chat-secondary" : "text-optimism",
+                      "group-hover:opacity-100 opacity-0 w-5 h-5 text-chat-secondary",
                       selectedChatId === chat.id && "opacity-100",
                     )}
                   />
@@ -95,17 +85,15 @@ export default function ChatSidebar() {
       </div>
       <hr className="border-t border-gray-200 my-4 mx-4" />
       <div className="px-4">
-        <h2 className="mb-2 font-semibold">
-          {isCow ? "CoW AI" : "Catch up on OP Governance"}
-        </h2>
+        <h2 className="mb-2 font-semibold">CoW AI</h2>
         <Link
-          href={isCow ? "https://docs.cow.fi" : "/forum"}
+          href="https://docs.cow.fi"
           target="_blank"
           className={cn(
             "flex items-center gap-3 rounded-lg py-2 transition-all hover:bg-gray-100 text-gray-700 text-sm mb-12",
           )}
         >
-          {isCow ? "Docs & Order Book API" : "Explore GovSummarizer"}
+          Docs & Order Book API
           <ExternalLink className="h-5 w-5 md:h-4 md:w-4" />
         </Link>
       </div>

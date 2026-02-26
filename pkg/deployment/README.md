@@ -114,7 +114,7 @@ To manually sync data:
 docker exec -it $(docker ps -q -f name=<PROJECT_PREFIX>_api-backend) bash
 
 # Inside the container
-cd /app/pkg/op-data
+cd /app
 poetry run sync categories
 poetry run sync topics
 poetry run sync summaries

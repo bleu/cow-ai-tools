@@ -1,60 +1,54 @@
-# Projects in this repo
+# CoW Protocol project
 
-This repository supports **two distinct projects** that share the same codebase (op-brains, op-app, www) but use different data, config, and scripts. Choose one project per environment; do not mix.
+This repo is **CoW-only**: RAG chat for CoW integration docs (Order Book API, order creation, approvals, errors).
 
-**Package layout:** The **op** prefix is for Optimism only; CoW has no code inside op-brains.
-- **`pkg/op-brains`** — Optimism only: config, documents (governance, forum), chat, retriever, setup
-- **`pkg/cow-brains`** — CoW only: config, documents (docs + OpenAPI), build_faiss, process_question (uses op-brains pipeline with CoW config/prompts)
-- **`pkg/op-app`** — API: when `PROJECT=cow` uses `cow_brains.process_question`, else `op_brains.chat.utils.process_question`
+## Package layout
 
-| | **CoW Protocol** | **Optimism** |
-|---|-----------------|--------------|
-| **Purpose** | RAG chat for CoW integration docs (Order Book API, order creation, approvals) | Governance chat + forum summarization, reporting |
-| **Data** | CoW docs artifact + OpenAPI spec; local FAISS index | Governance docs (op_artifacts) + forum/snapshot DB |
-| **LLM/Embeddings** | Gemini (one API key) | OpenAI/Anthropic + optional Gemini |
-| **Activation** | `PROJECT=cow` or `USE_COW=true` | `PROJECT=optimism` (default) or unset |
+- **`pkg/cow-app`** – API (Quart/uvicorn): `/up`, `/predict`; uses `cow_brains.process_question` and `rag_brains`.
+- **`pkg/cow-brains`** – CoW RAG: config, documents (docs + OpenAPI), `build_faiss`, `process_question` (uses `rag_brains` pipeline with CoW config/prompts).
+- **`pkg/rag-brains`** – Shared RAG: chat, retriever (FAISS), Gemini; no project-specific data.
+- **`pkg/cow-core`** – Shared utilities (e.g. logging).
 
----
+## Data and scripts
 
-## CoW Protocol project
-
-- **Config:** `PROJECT=cow` or `USE_COW=true`. Use `pkg/op-app/.envrc.example.cow` as reference.
 - **Data dir:** `data/cow-docs/` (docs artifact, OpenAPI YAML, FAISS index).
-- **Scripts:**  
-  - `scripts/cow-1-create-docs-dataset/main.py` – build docs artifact  
-  - `scripts/cow-2-fetch-openapi/main.py` – fetch Order Book OpenAPI  
-  - `scripts/test_cow_poc.sh` – validate artifact  
+- **Scripts:**
+  - `scripts/cow-1-create-docs-dataset/main.py` – build docs artifact
+  - `scripts/cow-2-fetch-openapi/main.py` – fetch Order Book OpenAPI
+  - `scripts/test_cow_poc.sh` – validate artifact
   - `scripts/test_cow_api.sh` – test API health + `/predict`
-- **Build index:** From `pkg/op-app`:  
-  `PROJECT=cow OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=... poetry run python -m cow_brains.build_faiss`
-- **Run API:** From `pkg/op-app`:  
-  `PROJECT=cow OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=... poetry run python op_app/api.py`
-- **Frontend:** In `www`, set `NEXT_PUBLIC_BRAND=cow` and `NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000/predict`.
-- **Docs:** [COW_POC_PLAN.md](COW_POC_PLAN.md), [cow_golden_questions.md](cow_golden_questions.md), [cow_quickstart_first_order.md](cow_quickstart_first_order.md).
 
----
+## Build index
 
-## Optimism project
+From repo root (with PYTHONPATH set) or from `pkg/cow-app`:
 
-- **Config:** `PROJECT=optimism` or leave `PROJECT` and `USE_COW` unset. Use `pkg/op-app/.envrc.example.optimism` as reference.
-- **Data:** Run op-* scripts for documentation and forum datasets; use `pkg/op-brains` setup and DB.
-- **Scripts:**  
-  - `scripts/op-2-create-initial-documentation-dataset/main.py`  
-  - `scripts/op-9-create-optimism-forum-dataset/main.py`  
-  - etc.
-- **Setup:** `cd pkg/op-brains && python op_brains/setup.py`
-- **Run API:** From `pkg/op-app`:  
-  `poetry run python op_app/api.py` (with DB and env for Optimism).
-- **Frontend:** Default branding; point to your API URL.
+```bash
+OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=... poetry run python -m cow_brains.build_faiss
+```
 
----
+## Run API
+
+From repo root:
+
+```bash
+bash scripts/run-backend.sh
+```
+
+Or from `pkg/cow-app` (with PYTHONPATH including `pkg/rag-brains:pkg/cow-brains:pkg/cow-core`):
+
+```bash
+poetry run uvicorn cow_app.api:app --host 0.0.0.0 --port 8000
+```
 
 ## Env reference
 
-- **CoW:** `PROJECT=cow`, `GOOGLE_API_KEY`, `OP_CHAT_BASE_PATH` (e.g. `../../data`). Optional: `COW_DOCS_PATH`, `COW_FAISS_PATH`, `COW_OPENAPI_PATH`.
-- **Optimism:** `DATABASE_URL`, `SECRET`, optional `OPENAI_API_KEY` / `CHAT_MODEL`, etc. Do not set `USE_COW` or `PROJECT=cow` when running Optimism.
+- **Required:** `GOOGLE_API_KEY`, `OP_CHAT_BASE_PATH` (e.g. `../../data` or `/app/data` in Docker).
+- **Optional:** `COW_DOCS_PATH`, `COW_FAISS_PATH`, `COW_OPENAPI_PATH`, `CHAT_MODEL`, `COW_OPENAPI_PATH`.
 
-Copy the right example before running:
+Copy `pkg/cow-app/.envrc.example` to `.envrc` (or `.env`) and set `GOOGLE_API_KEY`.
 
-- CoW: `cp pkg/op-app/.envrc.example.cow pkg/op-app/.envrc` then set `GOOGLE_API_KEY` in `.envrc`, or `cp pkg/op-app/.env.example pkg/op-app/.env` and set `GOOGLE_API_KEY` in `.env` (loaded by python-dotenv when running the API).
-- Optimism: `cp pkg/op-app/.envrc.example.optimism pkg/op-app/.envrc`
+## Frontend
+
+In `www`, set `NEXT_PUBLIC_CHAT_API_URL` to your backend URL (e.g. `http://localhost:8000/predict`).
+
+Docs: [COW_POC_PLAN.md](COW_POC_PLAN.md), [cow_golden_questions.md](cow_golden_questions.md), [cow_quickstart_first_order.md](cow_quickstart_first_order.md).

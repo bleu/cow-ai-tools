@@ -5,22 +5,22 @@ Test that the approval/ABI/gasless question is answered using the vault-relayer 
 Option A – against deployed API (no local FAISS/keys needed):
   COW_API_URL=https://cow-ai-tools-production.up.railway.app python scripts/test_approval_question.py
 
-Option B – local RAG (needs FAISS index + GOOGLE_API_KEY in pkg/op-app/.env):
-  cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=../../data poetry run python ../../scripts/test_approval_question.py
+Option B – local RAG (needs FAISS index + GOOGLE_API_KEY in pkg/cow-app/.env):
+  cd pkg/cow-app && OP_CHAT_BASE_PATH=../../data poetry run python ../../scripts/test_approval_question.py
 """
 import asyncio
 import os
 import sys
 
-# Allow running from repo root when invoked as ../../scripts/test_approval_question.py from pkg/op-app
+# Allow running from repo root when invoked as ../../scripts/test_approval_question.py from pkg/cow-app
 if __name__ == "__main__":
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     if repo_root not in sys.path:
         sys.path.insert(0, repo_root)
 
 repo = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-# Load pkg/op-app/.env so GOOGLE_API_KEY is set when running locally
-_env = os.path.join(repo, "pkg", "op-app", ".env")
+# Load pkg/cow-app/.env so GOOGLE_API_KEY is set when running locally
+_env = os.path.join(repo, "pkg", "cow-app", ".env")
 if os.path.isfile(_env):
     from dotenv import load_dotenv
     load_dotenv(_env)

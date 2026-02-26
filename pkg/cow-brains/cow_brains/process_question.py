@@ -1,17 +1,17 @@
-"""CoW RAG: process_question using op_brains pipeline with CoW config and prompts."""
+"""CoW RAG: process_question using rag_brains pipeline with CoW config and prompts."""
 from typing import Dict, Any, List, Tuple
 import asyncio
 import os
 
-from op_brains.chat import model_utils
-from op_brains.chat.system_structure import RAGSystem
-from op_brains.chat.utils import normalize_answer_text
-from op_brains.chat.apis import access_APIs
+from rag_brains.chat import model_utils
+from rag_brains.chat.system_structure import RAGSystem
+from rag_brains.chat.utils import normalize_answer_text
+from rag_brains.chat.apis import access_APIs
 from cow_brains.config import CHAT_MODEL, SCOPE, COW_FAISS_PATH, EMBEDDING_MODEL
 from cow_brains.data_exporter import DataExporter
 
 try:
-    from op_core.logger import get_logger
+    from cow_core.logger import get_logger
     logger = get_logger(__name__)
 except Exception:
     logger = None

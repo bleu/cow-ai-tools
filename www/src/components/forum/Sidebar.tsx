@@ -118,7 +118,7 @@ function NavLink({
         "flex items-center gap-3 rounded-lg px-3 py-1.5 transition-all text-sm",
         !isCategory && className,
         isSelected
-          ? "bg-[#FFDBDF] text-optimism font-semibold"
+          ? "bg-cow/15 text-cow font-semibold"
           : "hover:bg-gray-100",
       )}
       onClick={onClick}

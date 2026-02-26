@@ -1,0 +1,14 @@
+# CoW Protocol chat API – Gemini for chat + embeddings.
+# Copy: cp .envrc.example .envrc  then set GOOGLE_API_KEY.
+
+export GOOGLE_API_KEY=your_google_api_key_here
+export CHAT_MODEL=gemini-2.0-flash
+# Rebuild FAISS after changing embedding model: poetry run python -m cow_brains.build_faiss
+
+export OP_CHAT_BASE_PATH=../../data
+# Optional overrides:
+# export COW_DOCS_PATH=../../data/cow-docs/cow_docs.txt
+# export COW_SWAP_DOCS_PATH=../../data/cow-docs/cow_swap_docs.txt
+# export COW_SDK_DOCS_PATH=../../data/cow-docs/cow_sdk_docs.txt
+# export COW_FAISS_PATH=../../data/cow-docs/faiss
+# export COW_OPENAPI_PATH=../../data/cow-docs/openapi.yml

@@ -33,19 +33,17 @@ export const handlers = [
           return;
         }
 
-        const content = `Optimism is a Layer 2 scaling solution for Ethereum that uses optimistic rollup technology. Here are the key points about Optimism:
+        const content = `CoW Protocol provides infrastructure for trading (CoW Swap) and the Order Book API. Key points:
 
-1. It is an "Optimistic Rollup", bundling many Ethereum transactions into a single transaction on the Ethereum mainnet.
+1. **Order Book API** – Programmatic order placement and quoting; use \`buyAmount\` with slippage for limit orders.
 
-2. Optimism inherits Ethereum's security while offering scalability improvements.
+2. **Token approval** – You can set approval via ABI for gasless swaps; the API supports signing orders without transferring tokens first.
 
-3. It has a unique decentralized governance model with two chambers - the Token House and the Citizens' House.
+3. **Quoting** – Use "fast" for quick quotes or "optimal" when you want the best execution path.
 
-4. Optimism aims to stay as close to Ethereum as possible in terms of compatibility and design philosophy.
+4. **Errors** – InsufficientBalance usually means the solver cannot fulfill the order; check balance and slippage.
 
-5. The Optimism Collective is the DAO that governs the protocol, allowing token holders to participate in governance.
-
-In summary, Optimism is an Ethereum Layer 2 focused on scalability through optimistic rollups while maintaining decentralization and close compatibility with Ethereum.`;
+For more details see docs.cow.fi and the Order Book API documentation.`;
 
         await streamText(content, controller);
 
@@ -84,10 +82,10 @@ In summary, Optimism is an Ethereum Layer 2 focused on scalability through optim
     const response = {
       data: {
         answer:
-          "The OP token distribution is structured to support various initiatives within the Optimism ecosystem. Key allocations include:\n\n- **19%** for airdrops\n- **20%** for retroactive public goods funding (retroPGF)\n- **25%** for ecosystem funding\n- **17%** for investors\n- **19%** for core contributors\n\nAdditionally, specific proposals, such as one from Beefy Finance, have requested OP tokens for liquidity incentives, with detailed allocations: **35%** for farm incentives, **50%** for boosting native farms, and **15%** for developer incentives. Changes to these allocations require approval from the Collective governance, ensuring community involvement in the decision-making process.",
+          "To set buyAmount with slippage when creating an order, use the Order Book API quote endpoint to get a quote, then place an order with the desired limit. You can specify a slippage tolerance; the API returns valid order parameters. See the CoW Protocol integration docs at docs.cow.fi for exact request fields and examples.",
         url_supporting: [
-          "https://gov.optimism.io/t/clarification-on-op-token-supply/5589",
-          "https://gov.optimism.io/t/ready-gf-phase-1-proposal-beefy/2967",
+          "https://docs.cow.fi/",
+          "https://docs.cow.fi/docs/Integration/Order-book/order-creation",
         ],
       },
       error: null,

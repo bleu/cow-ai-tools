@@ -35,7 +35,7 @@ services:
     <<: *api-commons
     build:
       context: ../../
-      dockerfile: pkg/op-app/Dockerfile
+      dockerfile: Dockerfile.backend
       cache_from:
         - ${PROJECT_PREFIX:?error}-api-backend:latest
     ports:

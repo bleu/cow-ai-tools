@@ -7,14 +7,14 @@ Requires local packages on PYTHONPATH; see docs/deploy-vercel.md.
 from pathlib import Path
 import sys
 
-# Add monorepo packages so "from op_app.api import app" works
+# Add monorepo packages so "from cow_app.api import app" works
 _root = Path(__file__).resolve().parent.parent
-for p in ("pkg/op-core", "pkg/op-artifacts", "pkg/op-data", "pkg/op-brains", "pkg/cow-brains", "pkg/op-app"):
+for p in ("pkg/cow-core", "pkg/rag-brains", "pkg/cow-brains", "pkg/cow-app"):
     _path = _root / p
     if _path.exists() and str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
-from op_app.api import app as _quart_app
+from cow_app.api import app as _quart_app
 
 
 def _path_from_query(scope):

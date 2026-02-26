@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Test CoW PoC API: health + one /predict (RAG + Gemini).
 # Prereqs: API running with PROJECT=cow and GOOGLE_API_KEY.
-# Start API: cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=... poetry run python op_app/api.py
+# Start API: bash scripts/run-backend.sh (or cd pkg/cow-app && OP_CHAT_BASE_PATH=../../data GOOGLE_API_KEY=... poetry run uvicorn cow_app.api:app --host 0.0.0.0 --port 8000)
 
 set -e
 BASE_URL="${COW_API_URL:-http://localhost:8000}"

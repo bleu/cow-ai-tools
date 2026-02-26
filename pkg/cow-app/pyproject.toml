@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "cow-app"
+version = "0.1.0"
+description = "CoW Protocol chat API"
+authors = ["José Ribeiro <me@joseribeiro.dev>"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+cow-core = { path = "../cow-core", develop = true }
+rag-brains = { path = "../rag-brains", develop = true }
+cow-brains = { path = "../cow-brains", develop = true }
+python-dotenv = "^1.0.1"
+quart = "^0.19.6"
+quart-cors = "^0.7.0"
+uvicorn = "^0.30.6"
+aiofiles = "^24.1.0"
+sentence-transformers = "^5.2.3"
+google-generativeai = "^0.8.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.5.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

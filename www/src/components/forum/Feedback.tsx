@@ -134,7 +134,7 @@ export function Feedback({
                   className={cn(
                     "justify-start hover:bg-[#FFDBDF]",
                     selectedReasons.includes(reason.value as FeedbackReason) &&
-                      "bg-optimism hover:text-optimism",
+                      "bg-cow hover:text-cow",
                   )}
                 >
                   {reason.label}
@@ -158,7 +158,7 @@ export function Feedback({
             )}
             <Button
               type="submit"
-              className="mt-4 w-full bg-optimism text-white hover:bg-optimism/80"
+              className="mt-4 w-full bg-cow text-white hover:bg-cow/80"
             >
               Send feedback
             </Button>

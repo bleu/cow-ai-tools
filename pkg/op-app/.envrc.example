@@ -1,4 +1,0 @@
-# Choose one project and copy its env example. Do not mix.
-#   CoW:       cp .envrc.example.cow .envrc
-#   Optimism:  cp .envrc.example.optimism .envrc
-# See docs/PROJECTS.md for details.

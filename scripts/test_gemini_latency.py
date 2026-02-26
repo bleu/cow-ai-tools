@@ -2,9 +2,9 @@
 """
 Mede a latência da API Gemini (chat + embeddings). Rode com GOOGLE_API_KEY definido.
 
-  cd pkg/op-app && GOOGLE_API_KEY=... poetry run python ../../scripts/test_gemini_latency.py
+  cd pkg/cow-app && GOOGLE_API_KEY=... poetry run python ../../scripts/test_gemini_latency.py
 
-(Use o ambiente do op-app para ter google-generativeai instalado.)
+(Use o ambiente do cow-app para ter google-generativeai instalado.)
 
 Se algum passo levar >5s, a API Gemini ou a rede é provável causa do atraso no chat CoW.
 """
@@ -13,9 +13,9 @@ import sys
 import time
 from pathlib import Path
 
-# Carregar .env do op-app se existir
+# Carregar .env do cow-app se existir
 _repo = Path(__file__).resolve().parents[1]
-_env = _repo / "pkg" / "op-app" / ".env"
+_env = _repo / "pkg" / "cow-app" / ".env"
 if _env.is_file():
     try:
         from dotenv import load_dotenv

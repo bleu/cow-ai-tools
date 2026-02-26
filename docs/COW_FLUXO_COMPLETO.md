@@ -37,7 +37,7 @@ End-to-end flow: data preparation → vector index → API → RAG → frontend.
 ## 2. Building the FAISS index (once, or when updating docs)
 
 - **Module:** `cow_brains.build_faiss`  
-- **Command:** `cd pkg/op-app && PROJECT=cow OP_CHAT_BASE_PATH=... GOOGLE_API_KEY=... poetry run python -m cow_brains.build_faiss`
+- **Command:** `cd pkg/cow-app && OP_CHAT_BASE_PATH=... GOOGLE_API_KEY=... poetry run python -m cow_brains.build_faiss`
 
 **Internal steps:**
 
@@ -60,9 +60,8 @@ So the “docs” the chat uses are: fragments from CoW Markdown + OpenAPI chunk
 
 ## 3. API startup (backend)
 
-- **App:** `pkg/op-app/op_app/api.py` (Quart).
-- **CoW activation:** `PROJECT=cow` (or `USE_COW=true`) and, if you want, `OP_CHAT_BASE_PATH` in `.env` or in the environment.
-- **Startup:** Loads `.env` from `pkg/op-app` (e.g. `GOOGLE_API_KEY`), then imports `cow_brains.process_question` when the project is CoW.
+- **App:** `pkg/cow-app/cow_app/api.py` (Quart/uvicorn).
+- **Startup:** Loads `.env` from `pkg/cow-app` (e.g. `GOOGLE_API_KEY`, `OP_CHAT_BASE_PATH`), then imports `cow_brains.process_question`.
 - **Routes:**
   - `GET /up` → health check.
   - `POST /predict` → body `{ "question": "...", "memory": [ { "name": "user"|"chat", "message": "..." } ] }` → response `{ "data": { "answer": "...", "url_supporting": ["..."] }, "error": null }`.
@@ -88,7 +87,7 @@ So the “docs” the chat uses are: fragments from CoW Markdown + OpenAPI chunk
 3. **Retriever**
    - `RetrieverBuilder.build_faiss_retriever(faiss_path=COW_FAISS_PATH, embedding_model=EMBEDDING_MODEL, k=5)` loads the saved FAISS and exposes a function that, given a string (question or expansion), returns the `k` most similar documents.
 
-4. **RAG (op_brains.RAGSystem)**
+4. **RAG (rag_brains pipeline)**
    - **Preprocessor (LLM 1 – Gemini):** Receives the question and history. Decides whether it can answer from history alone (`needs_info=False`) or needs more context (`needs_info=True`). In the second case, returns questions and keywords for retrieval.
    - **Retrieval:** The retriever is called with those questions/keywords; FAISS returns the closest fragments in embedding space.
    - **Context filter:** Fragments are formatted as text (with URLs in context) and passed to the responder.
@@ -108,7 +107,7 @@ So the “docs” the chat uses are: fragments from CoW Markdown + OpenAPI chunk
 
 ## 5. One-sentence summary
 
-**Setup:** Scripts produce `cow_docs.txt` and (optional) `openapi.yml` → **Build:** `cow_brains.build_faiss` builds the FAISS from these sources with Gemini embeddings → **API:** With `PROJECT=cow`, `/predict` uses that FAISS and the op_brains RAG pipeline (preprocessor + retriever + Gemini responder) to produce `answer` and `url_supporting` → **Frontend:** Displays the answer and references as links to docs.cow.fi and Order Book API.
+**Setup:** Scripts produce `cow_docs.txt` and (optional) `openapi.yml` → **Build:** `cow_brains.build_faiss` builds the FAISS from these sources with Gemini embeddings → **API:** `/predict` uses that FAISS and the rag_brains RAG pipeline (preprocessor + retriever + Gemini responder) to produce `answer` and `url_supporting` → **Frontend:** Displays the answer and references as links to docs.cow.fi and Order Book API.
 
 ---
 
@@ -124,6 +123,6 @@ So the “docs” the chat uses are: fragments from CoW Markdown + OpenAPI chunk
 | Build FAISS        | `pkg/cow-brains/cow_brains/build_faiss.py` |
 | CoW config         | `pkg/cow-brains/cow_brains/config.py` |
 | process_question   | `pkg/cow-brains/cow_brains/process_question.py` |
-| HTTP API           | `pkg/op-app/op_app/api.py` |
-| RAG (preprocessor + responder) | `pkg/op-brains/op_brains/chat/system_structure.py`, `model_utils.py` |
+| HTTP API           | `pkg/cow-app/cow_app/api.py` |
+| RAG (preprocessor + responder) | `pkg/rag-brains/rag_brains/chat/system_structure.py`, `model_utils.py` |
 | References in UI   | `www/src/lib/chat-utils.ts` (`formatAnswerWithReferences`) |

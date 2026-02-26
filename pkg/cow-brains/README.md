@@ -9,7 +9,7 @@ CoW Protocol RAG: docs + Order Book OpenAPI + CoW Swap (cowswap repo) + CoW SDK 
 - **openapi_orderbook** — OpenApiOrderbookStrategy
 - **data_exporter** — DataExporter over CoW sources (docs, OpenAPI, CoW Swap, CoW SDK)
 - **build_faiss** — build FAISS index: `python -m cow_brains.build_faiss` (after creating artifacts)
-- **process_question** — RAG prediction (uses op_brains for pipeline; injects CoW config and dev-focused prompts)
+- **process_question** — RAG prediction (uses rag_brains for pipeline; injects CoW config and dev-focused prompts)
 
 To add CoW Swap content: run `python scripts/cow-3-create-cowswap-dataset/main.py` from repo root; then rebuild FAISS.
 To add CoW SDK content: run `python scripts/cow-4-create-cowsdk-dataset/main.py` from repo root; then rebuild FAISS.

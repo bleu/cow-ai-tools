@@ -19,7 +19,6 @@ const config = {
     },
     extend: {
       colors: {
-        optimism: "#FF0420",
         cow: {
           DEFAULT: "#33D0FF",
           light: "#5DD9FF",
