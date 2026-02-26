@@ -12,5 +12,6 @@ export CHAT_MODEL=gemini-2.0-flash
 export OP_CHAT_BASE_PATH=../../data
 # Optional overrides:
 # export COW_DOCS_PATH=../../data/cow-docs/cow_docs.txt
+# export COW_SWAP_DOCS_PATH=../../data/cow-docs/cow_swap_docs.txt
 # export COW_FAISS_PATH=../../data/cow-docs/faiss
 # export COW_OPENAPI_PATH=../../data/cow-docs/openapi.yml

@@ -9,22 +9,38 @@ REF_CITATION_RE = re.compile(r"\b(?:reference|ref|see|below)\s*\[(\d+)\]|(?<!\w)
 
 
 def _cited_reference_numbers(answer_text: str, max_ref: int = 10) -> List[int]:
-    """Extract reference numbers cited in the answer (e.g. [1], [2]) so we only return those URLs."""
+    """Extract reference numbers cited in the answer (e.g. [1], [2]) in order of first appearance."""
     if not answer_text:
         return []
-    numbers = set()
+    numbers_ordered = []
+    seen = set()
     for m in REF_CITATION_RE.finditer(answer_text):
         n = int(m.group(1) or m.group(2))
-        if 1 <= n <= max_ref:
-            numbers.add(n)
+        if 1 <= n <= max_ref and n not in seen:
+            seen.add(n)
+            numbers_ordered.append(n)
     # Also catch "References: [1] [2] [3]" at the end
     refs_section = re.search(r"references?\s*:\s*((?:\[\d+\]\s*)+)", answer_text, re.IGNORECASE)
     if refs_section:
-        for n in re.finditer(r"\[(\d+)\]", refs_section.group(1)):
-            num = int(n.group(1))
-            if 1 <= num <= max_ref:
-                numbers.add(num)
-    return sorted(numbers) if numbers else []
+        for m in re.finditer(r"\[(\d+)\]", refs_section.group(1)):
+            num = int(m.group(1))
+            if 1 <= num <= max_ref and num not in seen:
+                seen.add(num)
+                numbers_ordered.append(num)
+    return numbers_ordered
+
+
+def _renumber_citations_to_sequential(answer_text: str, cited_ordered: List[int]) -> str:
+    """Rewrite citation numbers so they are sequential [1], [2], [3], ... matching url_supporting order."""
+    if not cited_ordered:
+        return answer_text
+    old_to_new = {old: i for i, old in enumerate(cited_ordered, start=1)}
+    # Replace from largest old number first so e.g. [10] is not affected when we replace [1]
+    for old in sorted(old_to_new.keys(), reverse=True):
+        new = old_to_new[old]
+        if old != new:
+            answer_text = re.sub(r"\[" + str(old) + r"\]", "[" + str(new) + "]", answer_text)
+    return answer_text
 
 
 class RAGSystem:
@@ -190,14 +206,23 @@ class RAGSystem:
                     final=reasoning_level > self.REASONING_LIMIT,
                 )
 
-                # Use only the references actually cited in the answer: parse [1], [2] and return context_urls for those indices.
+                # Use only the references actually cited in the answer: map [1], [2] to context_urls by index (1-based).
+                # Renumber citations in the answer to sequential [1], [2], [3] so they match url_supporting.
                 if is_enough and isinstance(result, dict) and result.get("url_supporting") is not None and context_urls:
                     answer_text = result.get("answer") or ""
                     cited = _cited_reference_numbers(answer_text)
                     if cited:
-                        # Return enough URLs so every cited ref exists (e.g. if model says [7], [8], [9], return 9 URLs). Cap at 10.
-                        max_n = min(max(cited), 10)
-                        result["url_supporting"] = list(context_urls)[:max_n]
+                        # Return URLs for cited indices only, in citation order; dedupe while preserving order.
+                        ordered_urls = []
+                        seen = set()
+                        for i in cited:
+                            if 1 <= i <= len(context_urls):
+                                u = context_urls[i - 1]
+                                if u and u not in seen:
+                                    seen.add(u)
+                                    ordered_urls.append(u)
+                        result["url_supporting"] = ordered_urls
+                        result["answer"] = _renumber_citations_to_sequential(answer_text, cited)
                     else:
                         result["url_supporting"] = list(result.get("url_supporting") or [])[:6]
 

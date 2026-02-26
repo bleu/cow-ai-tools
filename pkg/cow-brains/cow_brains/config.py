@@ -19,11 +19,16 @@ def _resolve_base_path():
 
 BASE_PATH = _resolve_base_path()
 DOCS_PATH = os.getenv("COW_DOCS_PATH", os.path.join(BASE_PATH, "cow-docs", "cow_docs.txt"))
+COW_SWAP_DOCS_PATH = os.getenv("COW_SWAP_DOCS_PATH", os.path.join(BASE_PATH, "cow-docs", "cow_swap_docs.txt"))
 COW_FAISS_PATH = os.getenv("COW_FAISS_PATH", os.path.join(BASE_PATH, "cow-docs", "faiss"))
 COW_OPENAPI_PATH = os.getenv("COW_OPENAPI_PATH", os.path.join(BASE_PATH, "cow-docs", "openapi.yml"))
 
 if not os.path.isabs(DOCS_PATH):
     DOCS_PATH = os.path.abspath(DOCS_PATH)
+if COW_SWAP_DOCS_PATH and not os.path.isabs(COW_SWAP_DOCS_PATH):
+    COW_SWAP_DOCS_PATH = os.path.abspath(COW_SWAP_DOCS_PATH)
+if not os.path.isfile(COW_SWAP_DOCS_PATH or ""):
+    COW_SWAP_DOCS_PATH = ""
 if not os.path.isabs(COW_FAISS_PATH):
     COW_FAISS_PATH = os.path.abspath(COW_FAISS_PATH)
 if COW_OPENAPI_PATH and not os.path.isabs(COW_OPENAPI_PATH):

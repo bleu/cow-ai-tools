@@ -1,13 +1,15 @@
-"""DataExporter for CoW documents (docs + OpenAPI)."""
+"""DataExporter for CoW documents (docs + OpenAPI + CoW Swap)."""
 import pandas as pd
 from typing import Optional
 import asyncio
 import time
 
 from cow_brains.documents_cow import CowDocsProcessingStrategy
+from cow_brains.documents_cowswap import CowSwapDocsProcessingStrategy
 from cow_brains.openapi_orderbook import OpenApiOrderbookStrategy
 
-chat_sources = [[CowDocsProcessingStrategy], [OpenApiOrderbookStrategy]]
+# CoW Swap (cowswap repo) is optional: add only if cow_swap_docs.txt exists
+chat_sources = [[CowDocsProcessingStrategy], [OpenApiOrderbookStrategy], [CowSwapDocsProcessingStrategy]]
 
 
 class DataExporter:

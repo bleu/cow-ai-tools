@@ -1,12 +1,15 @@
 # cow-brains
 
-CoW Protocol RAG: docs + Order Book OpenAPI. **No Optimism/OP code.** Use when `PROJECT=cow`.
+CoW Protocol RAG: docs + Order Book OpenAPI + CoW Swap (cowswap repo). **No Optimism/OP code.** Use when `PROJECT=cow`.
 
-- **config** — CoW paths, SCOPE, CHAT_MODEL, EMBEDDING_MODEL
-- **documents_cow** — CowDocsProcessingStrategy (==> path <== artifact)
+- **config** — CoW paths (DOCS_PATH, COW_SWAP_DOCS_PATH, COW_OPENAPI_PATH), SCOPE, CHAT_MODEL, EMBEDDING_MODEL
+- **documents_cow** — CowDocsProcessingStrategy (==> path <== artifact from cowprotocol/docs)
+- **documents_cowswap** — CowSwapDocsProcessingStrategy (README + docs/ from cowprotocol/cowswap)
 - **openapi_orderbook** — OpenApiOrderbookStrategy
-- **data_exporter** — DataExporter over CoW sources
-- **build_faiss** — build FAISS index: `python -m cow_brains.build_faiss`
-- **process_question** — RAG prediction (uses op_brains for pipeline; injects CoW config and prompts)
+- **data_exporter** — DataExporter over CoW sources (docs, OpenAPI, CoW Swap)
+- **build_faiss** — build FAISS index: `python -m cow_brains.build_faiss` (after creating artifacts)
+- **process_question** — RAG prediction (uses op_brains for pipeline; injects CoW config and dev-focused prompts)
+
+To add CoW Swap content: run `python scripts/cow-3-create-cowswap-dataset/main.py` from repo root; then rebuild FAISS.
 
 The `op` prefix is for Optimism; CoW lives in this package only.

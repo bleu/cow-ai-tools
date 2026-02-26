@@ -211,7 +211,7 @@ Today's date is {TODAY}. Be aware of information that might be outdated.
 
 class ContextHandling:
     summary_template = """
-<summary_from_forum_thread>
+[{N}] <summary_from_forum_thread>
 <title>{TITLE}</title>
 <created_at>{CREATED_AT}</created_at>
 <last_posted_at>{LAST_POST_AT}</last_posted_at>
@@ -222,7 +222,7 @@ class ContextHandling:
 
 """
     doc_fragment_template = """
-<reference url="{URL}">
+[{N}] <reference url="{URL}">
 <content>{CONTENT}</content>
 </reference>
 
@@ -286,13 +286,19 @@ class ContextHandling:
 
     @staticmethod
     def format(context: dict, context_dict: dict) -> Tuple[str, list]:
+        # Build ordered list of unique URLs (1-based index = reference number [1], [2], ...)
+        url_list = list(dict.fromkeys(c.metadata.get("url") for c in context.values() if c.metadata.get("url")))
+        url_to_num = {u: i for i, u in enumerate(url_list, start=1)}
         out = []
         for c in context.values():
             type_db = c.metadata.get("type_db_info", "")
+            url = c.metadata.get("url") or ""
+            n = url_to_num.get(url, 0)
             match type_db:
                 case "forum_thread_summary":
                     out.append(
                         ContextHandling.summary_template.format(
+                            N=n,
                             TITLE=c.metadata["thread_title"],
                             CREATED_AT=c.metadata["created_at"],
                             LAST_POST_AT=c.metadata["last_posted_at"],
@@ -303,20 +309,20 @@ class ContextHandling:
                 case "docs_fragment" | "api-endpoint" | "api-schema":
                     out.append(
                         ContextHandling.doc_fragment_template.format(
+                            N=n,
                             URL=c.metadata.get("url", ""),
                             CONTENT=c.page_content,
                         )
                     )
                 case _:
-                    if c.metadata.get("url") and c.page_content:
+                    if url and c.page_content:
                         out.append(
                             ContextHandling.doc_fragment_template.format(
-                                URL=c.metadata["url"],
+                                N=n,
+                                URL=url,
                                 CONTENT=c.page_content,
                             )
                         )
-        # Return actual URLs for response (keys may be composite for api-schema/endpoint)
-        url_list = list(dict.fromkeys(c.metadata.get("url") for c in context.values() if c.metadata.get("url")))
         return "".join(out), url_list
 
     @staticmethod
