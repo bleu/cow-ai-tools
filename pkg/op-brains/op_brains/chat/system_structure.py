@@ -35,11 +35,18 @@ def _renumber_citations_to_sequential(answer_text: str, cited_ordered: List[int]
     if not cited_ordered:
         return answer_text
     old_to_new = {old: i for i, old in enumerate(cited_ordered, start=1)}
-    # Replace from largest old number first so e.g. [10] is not affected when we replace [1]
+    return _renumber_citations_with_mapping(answer_text, old_to_new)
+
+
+def _renumber_citations_with_mapping(answer_text: str, old_to_new: dict) -> str:
+    """Rewrite citation numbers using old_to_new mapping. Replace from largest old first to avoid collisions."""
+    if not old_to_new:
+        return answer_text
     for old in sorted(old_to_new.keys(), reverse=True):
         new = old_to_new[old]
         if old != new:
             answer_text = re.sub(r"\[" + str(old) + r"\]", "[" + str(new) + "]", answer_text)
+    # Remove any [n] that are not in mapping (e.g. model cited [11] but we only have 10 sources)
     return answer_text
 
 
@@ -207,12 +214,12 @@ class RAGSystem:
                 )
 
                 # Use only the references actually cited in the answer: map [1], [2] to context_urls by index (1-based).
-                # Renumber citations in the answer to sequential [1], [2], [3] so they match url_supporting.
+                # Renumber citations so they are sequential [1], [2], ... matching url_supporting (deduped URLs).
                 if is_enough and isinstance(result, dict) and result.get("url_supporting") is not None and context_urls:
                     answer_text = result.get("answer") or ""
                     cited = _cited_reference_numbers(answer_text)
                     if cited:
-                        # Return URLs for cited indices only, in citation order; dedupe while preserving order.
+                        # Build deduped ordered_urls and map each cited index to its 1-based rank in that list.
                         ordered_urls = []
                         seen = set()
                         for i in cited:
@@ -222,7 +229,31 @@ class RAGSystem:
                                     seen.add(u)
                                     ordered_urls.append(u)
                         result["url_supporting"] = ordered_urls
-                        result["answer"] = _renumber_citations_to_sequential(answer_text, cited)
+                        url_to_rank = {u: r for r, u in enumerate(ordered_urls, start=1)}
+                        old_to_new = {}
+                        for i in cited:
+                            if 1 <= i <= len(context_urls):
+                                u = context_urls[i - 1]
+                                if u:
+                                    old_to_new[i] = url_to_rank[u]
+                        answer_text = _renumber_citations_with_mapping(answer_text, old_to_new)
+                        n_refs = len(ordered_urls)
+                        # Remove orphan citation markers (e.g. [11] when we only have 3 URLs)
+                        for orphan in range(n_refs + 1, 20):
+                            answer_text = re.sub(r"\[" + str(orphan) + r"\]", "", answer_text)
+                        # Normalize "References: ..." line to exactly [1] [2] ... so it matches url_supporting
+                        refs_line = " ".join(f"[{r}]" for r in range(1, n_refs + 1))
+                        if re.search(r"\breferences?\s*:", answer_text, re.IGNORECASE):
+                            answer_text = re.sub(
+                                r"\breferences?\s*:\s*(?:\[\d+\]\s*)*",
+                                f"References: {refs_line}",
+                                answer_text,
+                                flags=re.IGNORECASE,
+                                count=1,
+                            )
+                        elif n_refs > 0:
+                            answer_text = answer_text.rstrip() + f"\n\nReferences: {refs_line}"
+                        result["answer"] = answer_text
                     else:
                         result["url_supporting"] = list(result.get("url_supporting") or [])[:6]
 
