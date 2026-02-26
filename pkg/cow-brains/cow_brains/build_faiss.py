@@ -13,7 +13,7 @@ async def main():
     df = await DataExporter.get_dataframe(only_not_embedded=False)
     documents = df["content"].tolist()
     if not documents:
-        print("No documents. Set COW_DOCS_PATH and/or COW_OPENAPI_PATH (and optionally COW_SWAP_DOCS_PATH) and ensure artifacts exist.")
+        print("No documents. Set COW_DOCS_PATH and/or COW_OPENAPI_PATH (and optionally COW_SWAP_DOCS_PATH, COW_SDK_DOCS_PATH) and ensure artifacts exist.")
         return
 
     print(f"Embedding {len(documents)} chunks...")

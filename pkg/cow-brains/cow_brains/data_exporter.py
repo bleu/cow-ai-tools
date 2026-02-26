@@ -6,10 +6,16 @@ import time
 
 from cow_brains.documents_cow import CowDocsProcessingStrategy
 from cow_brains.documents_cowswap import CowSwapDocsProcessingStrategy
+from cow_brains.documents_cowsdk import CowSdkDocsProcessingStrategy
 from cow_brains.openapi_orderbook import OpenApiOrderbookStrategy
 
-# CoW Swap (cowswap repo) is optional: add only if cow_swap_docs.txt exists
-chat_sources = [[CowDocsProcessingStrategy], [OpenApiOrderbookStrategy], [CowSwapDocsProcessingStrategy]]
+# CoW Swap and CoW SDK are optional: add only if corresponding artifact exists
+chat_sources = [
+    [CowDocsProcessingStrategy],
+    [OpenApiOrderbookStrategy],
+    [CowSwapDocsProcessingStrategy],
+    [CowSdkDocsProcessingStrategy],
+]
 
 
 class DataExporter:

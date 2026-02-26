@@ -19,12 +19,15 @@ except Exception:
 COW_RESPONDER_EXTRA = """
 
 Your audience is developers integrating with the CoW Protocol (Order Book API, docs.cow.fi, CoW Swap frontend). Be direct and practical. Use only the provided context. Each source in the context is numbered [1], [2], [3], etc.—cite using only these numbers in order of first use. List only cited references at the end (e.g. References: [1] [2] [3]).
+- **Best solution for developers:** Give the best solution based on all the context you have. When the context includes both Order Book API (HTTP/curl) and CoW SDK (TypeScript/JavaScript) docs, prefer the SDK approach as the primary answer—with a TypeScript or JavaScript code example—because that is the better developer experience. You do not require the user to say "SDK" or "TypeScript"; use the SDK when it is in context and fits the question. You can mention the raw API as an alternative if relevant.
 - When the provided context clearly describes appData, appDataHash, the order book API, or how to upload/register data, answer from that context. Do not say you lack information if the context explains how to compute or pass appData/appDataHash—use the context to answer.
 - For CoW Swap (the frontend app, widget, or swap UI): if the context includes CoW Swap README or docs (monorepo, apps, widget, embed), use it to answer how to run, integrate, or embed the swap interface. Prefer docs.cow.fi for protocol/API and the cowswap repo context for frontend/structure.
+- For the CoW SDK (TypeScript/JavaScript, @cowprotocol/cow-sdk): if the context includes cow-sdk README or docs (getQuote, OrderBookApi, order signing, slippage), use it to give code examples and SDK usage. Prefer SDK docs for "how do I do X with the SDK" or "code example"; combine with API docs when the user wants both API and SDK.
+- When the user mentions **TypeScript**, **TS**, **JavaScript**, **SDK**, or asks for **code**: if the context includes CoW SDK package READMEs (packages/sdk, packages/trading, packages/order-book, order-signing), answer with a TypeScript or JavaScript code example using the SDK (e.g. getQuote, signOrder, OrderBookApi). Use a ```typescript or ```javascript code block. If the exact SDK API is not clearly documented in the context, still give a short TS/JS snippet that illustrates the flow (e.g. get quote then build order) and cite the API; do not refuse to answer.
 - For token approval, ABI, or gasless swaps: the docs describe ERC-20 allowances to the GPv2VaultRelayer, Balancer external/internal balances (gas-efficient), and the vault relayer. If the context mentions any of these (e.g. "Fallback ERC-20 Allowances", "GPv2VaultRelayer", "approve", "sellTokenBalance"), you must use it to answer. Do not say "I cannot provide" when the context clearly describes approval: give the steps (e.g. approve the sell token for the GPv2VaultRelayer contract; for gasless use internal/external balances per context) and a minimal code hint in a code block. Cite the reference; if the exact ABI is not in the context, say "For the contract address and full ABI see reference [N] below."
 - For API errors (e.g. InsufficientBalance, InsufficientAllowance, "what does X mean", "how do I fix"): if the context mentions OrderPostError, errorType, 400, or order validation, use it to explain and suggest fixes. If the context does not list error types but the user asks about a named error (e.g. InsufficientBalance): give a brief interpretation from the name (e.g. "InsufficientBalance usually means the user's sell token balance or allowance is too low for the order; ensure sufficient balance and approve the sell token for the GPv2VaultRelayer") and point to the Order Book API reference [1] for full error details. Never say "I am unable to answer" or "the context does not contain" for error questions—always give a direct answer and cite a reference.
-- For buyAmount, slippage, or creating an order via the **API** (not the widget): (1) Get a quote: POST /api/v1/quote with sellToken, buyToken, and either sellAmountBeforeFee/sellAmountAfterFee (sell order) or buyAmountAfterFee (buy order). (2) The quote response contains the order parameters (sellAmount, buyAmount, fee, etc.)—use these to build and sign your order; the quoted buyAmount is your minimum out (slippage is implicit in using the quote). (3) POST the signed order to /api/v1/orders. If the context mentions the quote endpoint, OrderParameters, or OrderQuoteSide, use it and give this API flow with a minimal curl/JSON example. Do not answer with widget or UI slippage settings when the user asks about creating an order—answer with the Order Book API (quote then order creation).
-- For "how do I" questions (approval, API calls, signing, quoting, order creation): always include a minimal code example inside a markdown fenced code block (e.g. ```bash ... ``` or ```json ... ```). Never output raw curl or code without wrapping it in a code block—use bash/curl for HTTP, json for bodies, javascript/typescript when the context shows SDK. One short snippet is better than none.
+- For buyAmount, slippage, or creating an order (not the widget): If the context includes CoW SDK docs (packages/sdk, packages/trading, order-book), lead with the SDK approach: get a quote (e.g. getQuote or quote endpoint), then build and sign the order with the SDK; include a TypeScript/JavaScript code block. Slippage is often via slippageBps or implicit in the quoted buyAmount. If the context has only API docs, use the HTTP flow: (1) POST /api/v1/quote, (2) use quote response to build/sign order, (3) POST to /api/v1/orders with a curl example. Do not answer with widget or UI slippage settings when the user asks about creating an order programmatically.
+- For "how do I" questions (approval, API calls, signing, quoting, order creation): always include a minimal code example inside a markdown fenced code block. Prefer ```typescript or ```javascript when the context includes CoW SDK docs (packages/sdk, packages/trading, order-book)—that is the best solution for developers; otherwise use ```bash for curl or ```json for bodies. Never output raw curl or code without wrapping it in a code block. One short snippet is better than none.
 - When you mention "official documentation", "docs", or "find the address/endpoint": always tie it to the reference the user can click. Write e.g. "See reference [1] below for the GPv2VaultRelayer address per network" or "The exact endpoint is documented in [1]." so the user uses [1] instead of searching. Never say only "find it in the official documentation" without pointing to [1] (or the relevant reference number).
 - If the context contains concrete values (contract address, base URL, endpoint path), use them in the code example instead of placeholders when possible (e.g. mainnet GPv2VaultRelayer address if present in the context).
 - Cite in order of first use: [1] = first source you use, [2] = second, etc. Only cite sources you actually use; the reference list at the end must contain exactly those URLs in that order. Do not invent endpoints or addresses.
@@ -108,17 +111,20 @@ async def process_question(
                         return ctx
                 main_ctx = await default_retriever(q, contexts_df)
                 q_lower = (q or "").lower()
-                # At most one boost query to keep latency low
-                boost = None
+                # Boosts: one primary by topic; for order/quote/slippage always add SDK so we have best dev solution
+                boosts = []
                 if any(t in q_lower for t in ("approval", "approve", "abi", "gasless", "allowance", "vault relayer")):
-                    boost = "GPv2VaultRelayer token allowance approval ERC-20 gasless"
+                    boosts.append("GPv2VaultRelayer token allowance approval ERC-20 gasless")
                 elif any(t in q_lower for t in ("insufficientbalance", "insufficient allowance", "error type", "what does", "how do i fix", "orderposterror")):
-                    boost = "OrderPostError InsufficientBalance order validation error 400"
+                    boosts.append("OrderPostError InsufficientBalance order validation error 400")
                 elif any(t in q_lower for t in ("buyamount", "slippage", "creating an order", "order creation", "sellamount")):
-                    boost = "POST /api/v1/quote OrderQuoteSide buyAmount sellAmount order parameters"
+                    boosts.append("POST /api/v1/quote OrderQuoteSide buyAmount sellAmount order parameters")
+                    boosts.append("CoW SDK TypeScript getQuote order signing OrderBookApi trading")
                 elif any(t in q_lower for t in ("cow swap", "cowswap", "widget", "frontend", "embed", "swap ui", "swap interface")):
-                    boost = "CoW Swap frontend widget embed monorepo apps"
-                if boost:
+                    boosts.append("CoW Swap frontend widget embed monorepo apps")
+                elif any(t in q_lower for t in ("sdk", "cow-sdk", "typescript", " ts ", "javascript", "getquote", "orderbookapi", "order signing")):
+                    boosts.append("CoW SDK TypeScript getQuote order signing OrderBookApi trading")
+                for boost in boosts[:2]:  # cap at 2 to keep latency reasonable
                     extra = await default_retriever(boost, contexts_df)
                     main_ctx = _merge_contexts(main_ctx, extra)
                 return main_ctx
@@ -126,16 +132,19 @@ async def process_question(
                 q = query["query"]
                 main_ctx = await default_retriever(q, contexts_df)
                 q_lower = (q or "").lower()
-                boost = None
+                boosts = []
                 if any(t in q_lower for t in ("approval", "approve", "abi", "gasless", "allowance", "vault relayer")):
-                    boost = "GPv2VaultRelayer token allowance approval ERC-20 gasless"
+                    boosts.append("GPv2VaultRelayer token allowance approval ERC-20 gasless")
                 elif any(t in q_lower for t in ("insufficientbalance", "insufficient allowance", "error type", "what does", "how do i fix", "orderposterror")):
-                    boost = "OrderPostError InsufficientBalance order validation error 400"
+                    boosts.append("OrderPostError InsufficientBalance order validation error 400")
                 elif any(t in q_lower for t in ("buyamount", "slippage", "creating an order", "order creation", "sellamount")):
-                    boost = "POST /api/v1/quote OrderQuoteSide buyAmount sellAmount order parameters"
+                    boosts.append("POST /api/v1/quote OrderQuoteSide buyAmount sellAmount order parameters")
+                    boosts.append("CoW SDK TypeScript getQuote order signing OrderBookApi trading")
                 elif any(t in q_lower for t in ("cow swap", "cowswap", "widget", "frontend", "embed", "swap ui", "swap interface")):
-                    boost = "CoW Swap frontend widget embed monorepo apps"
-                if boost:
+                    boosts.append("CoW Swap frontend widget embed monorepo apps")
+                elif any(t in q_lower for t in ("sdk", "cow-sdk", "typescript", " ts ", "javascript", "getquote", "orderbookapi", "order signing")):
+                    boosts.append("CoW SDK TypeScript getQuote order signing OrderBookApi trading")
+                for boost in boosts[:2]:
                     extra = await default_retriever(boost, contexts_df)
                     main_ctx = _merge_contexts(main_ctx, extra)
                 return main_ctx

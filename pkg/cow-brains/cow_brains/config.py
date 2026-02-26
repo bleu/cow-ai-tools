@@ -20,6 +20,7 @@ def _resolve_base_path():
 BASE_PATH = _resolve_base_path()
 DOCS_PATH = os.getenv("COW_DOCS_PATH", os.path.join(BASE_PATH, "cow-docs", "cow_docs.txt"))
 COW_SWAP_DOCS_PATH = os.getenv("COW_SWAP_DOCS_PATH", os.path.join(BASE_PATH, "cow-docs", "cow_swap_docs.txt"))
+COW_SDK_DOCS_PATH = os.getenv("COW_SDK_DOCS_PATH", os.path.join(BASE_PATH, "cow-docs", "cow_sdk_docs.txt"))
 COW_FAISS_PATH = os.getenv("COW_FAISS_PATH", os.path.join(BASE_PATH, "cow-docs", "faiss"))
 COW_OPENAPI_PATH = os.getenv("COW_OPENAPI_PATH", os.path.join(BASE_PATH, "cow-docs", "openapi.yml"))
 
@@ -29,6 +30,10 @@ if COW_SWAP_DOCS_PATH and not os.path.isabs(COW_SWAP_DOCS_PATH):
     COW_SWAP_DOCS_PATH = os.path.abspath(COW_SWAP_DOCS_PATH)
 if not os.path.isfile(COW_SWAP_DOCS_PATH or ""):
     COW_SWAP_DOCS_PATH = ""
+if COW_SDK_DOCS_PATH and not os.path.isabs(COW_SDK_DOCS_PATH):
+    COW_SDK_DOCS_PATH = os.path.abspath(COW_SDK_DOCS_PATH)
+if not os.path.isfile(COW_SDK_DOCS_PATH or ""):
+    COW_SDK_DOCS_PATH = ""
 if not os.path.isabs(COW_FAISS_PATH):
     COW_FAISS_PATH = os.path.abspath(COW_FAISS_PATH)
 if COW_OPENAPI_PATH and not os.path.isabs(COW_OPENAPI_PATH):
