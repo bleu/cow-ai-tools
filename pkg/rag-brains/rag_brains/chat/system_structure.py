@@ -85,8 +85,6 @@ class RAGSystem:
             LLM, QUERY=query, CONVERSATION_HISTORY=memory
         )
 
-        print(output_LLM)
-
         if not output_LLM["needs_info"]:
             return False, output_LLM["answer"]
         else:
